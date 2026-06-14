@@ -1,10 +1,15 @@
 #include <math.h>
 #include <raylib.h>
+#include <stdlib.h>
 #include "cube.h"
+#include "scramble.h"
 
 int main(void) {
 	RubiksCube myCube;
 	init_cube(&myCube);
+	scramble_init("cache");
+	char* currentScramble = generate_scramble(21);
+	// placeholder scramble since cube is solved on launch
 
 	const int screenWidth = 800;
 	const int screenHeight = 600;
@@ -32,6 +37,17 @@ int main(void) {
 		if (currentHeight <= 0) currentHeight = 1;
 
 		handle_cube_inputs(&myCube);
+
+		if (IsKeyPressed(KEY_ENTER)) {
+			free(currentScramble);
+			init_cube(&myCube);
+
+			char* solutionStr = generate_scramble(21);
+			currentScramble = invert_scramble(solutionStr);
+			
+			apply_scramble(&myCube, currentScramble);
+			free(solutionStr);
+		}
 
 		Vector2 currentMousePosition = GetMousePosition();
 
@@ -63,13 +79,28 @@ int main(void) {
 
 		BeginDrawing();
 
-		ClearBackground(RAYWHITE);
+		ClearBackground((Color){238, 255, 204});
 
 		BeginMode3D(camera);
 		draw_cube(&myCube);
 		EndMode3D();
 
-		DrawText("rubixed", 10, 40, 20 * (currentHeight / 600), DARKBLUE);
+		int font_multi = currentHeight / 600;
+
+		DrawText(
+			"rubixed",
+			10,
+			40,
+			20 * font_multi,
+			BLACK
+		);
+		DrawText(
+			currentScramble,
+			(currentWidth - MeasureText(currentScramble, 30 * font_multi)) / 2,
+			20,
+			30 * font_multi,
+			BLACK
+		);
 		DrawFPS(10, 10);
 
 		EndDrawing();

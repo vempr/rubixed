@@ -15,4 +15,15 @@ else
 endif
 
 all:
-	gcc main.c cube.c draw.c -o $(TARGET) $(LIBS)
+	gcc -std=c99 -O3 -D_POSIX_C_SOURCE=200809L \
+	-I./ckociemba/include \
+	main.c \
+	cube.c \
+	draw.c \
+	scramble.c \
+	ckociemba/coordcube.c \
+	ckociemba/cubiecube.c \
+	ckociemba/facecube.c \
+	ckociemba/search.c \
+	ckociemba/prunetable_helpers.c \
+	-o $(TARGET) $(LIBS)
