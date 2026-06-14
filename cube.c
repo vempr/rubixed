@@ -34,20 +34,49 @@ void init_cube(RubiksCube *cube) {
 	}
 }
 
-void cycle_colors(int colors[6], enum FACE f1,  enum FACE f2,  enum FACE f3,  enum FACE f4, int clockwise) {
-	if (clockwise == 1) {
-		int temp = colors[f4];
-		colors[f4] = colors[f3];
-		colors[f3] = colors[f2];
-		colors[f2] = colors[f1];
-		colors[f1] = temp;
-	} else {
-		int temp = colors[f1];
-		colors[f1] = colors[f2];
-		colors[f2] = colors[f3];
-		colors[f3] = colors[f4];
-		colors[f4] = temp;
+// cycle_colors is deprecated. new system does not use manual sticker rotation
+
+// void cycle_colors(int colors[6], enum FACE f1,  enum FACE f2,  enum FACE f3,  enum FACE f4, int clockwise) {
+// 	if (clockwise == 1) {
+// 		int temp = colors[f4];
+// 		colors[f4] = colors[f3];
+// 		colors[f3] = colors[f2];
+// 		colors[f2] = colors[f1];
+// 		colors[f1] = temp;
+// 	} else {
+// 		int temp = colors[f1];
+// 		colors[f1] = colors[f2];
+// 		colors[f2] = colors[f3];
+// 		colors[f3] = colors[f4];
+// 		colors[f4] = temp;
+// 	}
+// }
+
+static int rotate_face_index(int f, Axis axis, int dir) {
+	switch (axis) {
+		case AXIS_X:
+			if (f == FACE_UP) return dir ? FACE_BACK : FACE_FRONT;
+			if (f == FACE_BACK) return dir ? FACE_DOWN : FACE_UP;
+			if (f == FACE_DOWN) return dir ? FACE_FRONT : FACE_BACK;
+			if (f == FACE_FRONT) return dir ? FACE_UP : FACE_DOWN;
+			return f;
+		
+		case AXIS_Y:
+			if (f == FACE_FRONT) return dir ? FACE_RIGHT : FACE_LEFT;
+			if (f == FACE_RIGHT) return dir ? FACE_BACK : FACE_FRONT;
+			if (f == FACE_BACK) return dir ? FACE_LEFT : FACE_RIGHT;
+			if (f == FACE_LEFT) return dir ? FACE_FRONT : FACE_BACK;
+			return f;
+		
+		case AXIS_Z:
+			if (f == FACE_UP) return dir ? FACE_RIGHT : FACE_LEFT;
+			if (f == FACE_LEFT) return dir ? FACE_UP : FACE_DOWN;
+			if (f == FACE_DOWN) return dir ? FACE_LEFT : FACE_RIGHT;
+			if (f == FACE_RIGHT) return dir ? FACE_DOWN : FACE_UP;
+			return f;
 	}
+
+	return f;
 }
 
 static void rotate_piece(Cube *p, Axis axis, int dir) {
@@ -59,48 +88,31 @@ static void rotate_piece(Cube *p, Axis axis, int dir) {
 		case AXIS_X:
 			p->y = dir ? -z : z;
 			p->z = dir ? y : -y;
-
-			cycle_colors(
-				p->colors,
-				FACE_UP, 
-				FACE_BACK,
-				FACE_DOWN,
-				FACE_FRONT,
-				dir
-			);
 			break;
 
 		case AXIS_Y:
 			p->x = dir ? -z : z;
 			p->z = dir ? x : -x;
-
-			cycle_colors(
-				p->colors,
-				FACE_FRONT,
-				FACE_RIGHT,
-				FACE_BACK,
-				FACE_LEFT,
-				dir
-			);
 			break;
 
 		case AXIS_Z:
 			p->x = dir ? -y : y;
 			p->y = dir ? x : -x;
-
-			cycle_colors(
-				p->colors,
-				FACE_UP,
-				FACE_RIGHT,
-				FACE_DOWN,
-				FACE_LEFT,
-				dir
-			);
 			break;
+	}
+
+	int temp[6];
+	for (int i = 0; i < 6; i++) {
+		temp[i] = p->colors[i];
+	}
+
+	for (int i = 0; i < 6; i++) {
+		int new_face = rotate_face_index(i, axis, dir);
+		p->colors[i] = temp[new_face];
 	}
 }
 
-void rotate_face(RubiksCube *cube, enum FACE face, int clockwise) {
+void rotate_face(RubiksCube *cube, Face face, int clockwise) {
 	Axis axis;
 	int layer;
 	int dir;
@@ -109,37 +121,37 @@ void rotate_face(RubiksCube *cube, enum FACE face, int clockwise) {
 		case FACE_RIGHT:
 			axis = AXIS_X;
 			layer = 1;
-			dir = clockwise;
+			dir = clockwise ? 0 : 1;
 			break;
 		
 		case FACE_LEFT:
 			axis = AXIS_X;
 			layer = -1;
-			dir = -clockwise;
+			dir = clockwise ? 1 : 0;
 			break;
 		
 		case FACE_UP:
 			axis = AXIS_Y;
 			layer = 1;
-			dir = clockwise;
+			dir = clockwise ? 0 : 1;
 			break;
 		
 		case FACE_DOWN:
 			axis = AXIS_Y;
 			layer = -1;
-			dir = !clockwise;
+			dir = clockwise ? 1 : 0;
 			break;
 
 		case FACE_FRONT:
 			axis = AXIS_Z;
 			layer = 1;
-			dir = clockwise;
+			dir = clockwise ? 0 : 1;
 			break;
 		
 		case FACE_BACK:
 			axis = AXIS_Z;
 			layer = -1;
-			dir = !clockwise;
+			dir = clockwise ? 1 : 0;
 			break;
 	}
 
