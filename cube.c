@@ -33,6 +33,66 @@ void init_cube(RubiksCube *cube) {
 	}
 }
 
+void cycle_colors(int colors[6], enum FACE f1,  enum FACE f2,  enum FACE f3,  enum FACE f4, int clockwise) {
+	if (clockwise) {
+		int temp = colors[f4];
+		colors[f4] = colors[f3];
+		colors[f3] = colors[f2];
+		colors[f2] = colors[f1];
+		colors[f1] = temp;
+	} else {
+		int temp = colors[f1];
+		colors[f1] = colors[f2];
+		colors[f2] = colors[f3];
+		colors[f3] = colors[f4];
+		colors[f4] = temp;
+	}
+}
+
 void rotate_face(RubiksCube *cube, enum FACE face, int clockwise) {
-	
+	for (int i = 0; i < 27; i++) {
+		Cube *p = &cube->pieces[i];
+
+		int should_rotate = 0;
+		if (face == FACE_RIGHT && p->x == 1) should_rotate = 1;
+		if (face == FACE_LEFT && p->x == -1) should_rotate = 1;
+		if (face == FACE_UP && p->y == 1) should_rotate = 1;
+		if (face == FACE_DOWN && p->y == -1) should_rotate = 1;
+		if (face == FACE_FRONT && p->z == 1) should_rotate = 1;
+		if (face == FACE_BACK && p->z == -1) should_rotate = 1;
+
+		if (!should_rotate) continue;
+
+		// update piece positions, then colors
+
+		int old_x = p->x;
+		int old_y = p->y;
+		int old_z = p->z;
+
+		if (face == FACE_RIGHT) {
+			p->y = clockwise ? -old_z : old_z;
+			p->z = clockwise ? old_y : -old_y;
+			cycle_colors(p->colors, FACE_UP, FACE_BACK, FACE_DOWN, FACE_FRONT, clockwise);
+		} else if (face == FACE_LEFT) {
+			p->y = clockwise ? -old_z : old_z;
+			p->z = clockwise ? old_y : -old_y;
+			cycle_colors(p->colors, FACE_UP, FACE_FRONT, FACE_DOWN, FACE_BACK, clockwise);
+		} else if (face == FACE_UP) {
+			p->x = clockwise ? old_z : -old_z;
+			p->z = clockwise ? -old_x : old_x;
+			cycle_colors(p->colors, FACE_FRONT, FACE_LEFT, FACE_BACK, FACE_RIGHT, clockwise);
+		} else if (face == FACE_DOWN) {
+			p->x = clockwise ? old_z : -old_z;
+			p->z = clockwise ? -old_x : old_x;
+			cycle_colors(p->colors, FACE_FRONT, FACE_RIGHT, FACE_BACK, FACE_LEFT, clockwise);
+		} else if (face == FACE_FRONT) {
+			p->x = clockwise ? -old_y : old_y;
+			p->y = clockwise ? old_x : -old_x;
+			cycle_colors(p->colors, FACE_UP, FACE_RIGHT, FACE_DOWN, FACE_LEFT, clockwise);
+		} else if (face == FACE_BACK) {
+			p->x = clockwise ? -old_y : old_y;
+			p->y = clockwise ? old_x : -old_x;
+			cycle_colors(p->colors, FACE_UP, FACE_LEFT, FACE_DOWN, FACE_RIGHT, clockwise);
+		}
+	}
 }
