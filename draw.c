@@ -16,13 +16,14 @@ static Color GetRaylibColor(int ci) {
 void draw_cube (RubiksCube *cube) {
   float size = 1.0f;
   float stickerSize = 0.9f;
-  float offset = 0.01f;
+  float offset = 0.1f;
   
   for (int i = 0; i < 27; i++) {
     Cube p = cube->pieces[i];
     Vector3 pos = {(float)p.x, (float)p.y, (float)p.z};
 
-    DrawCube(pos, size, size, size, BLACK);
+    DrawCube(pos, size, size, size, (Color){0,0,0,0});
+    // for debug (Color){0,0,0,0}
     
     // draw stickrs
 

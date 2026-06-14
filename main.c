@@ -31,6 +31,8 @@ int main(void) {
 		int currentHeight = GetScreenHeight();
 		if (currentHeight <= 0) currentHeight = 1;
 
+		handle_cube_inputs(&myCube);
+
 		Vector2 currentMousePosition = GetMousePosition();
 
 		if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT) || IsMouseButtonDown(MOUSE_BUTTON_MIDDLE)) {
@@ -40,8 +42,9 @@ int main(void) {
 			cameraAlpha -= deltaX * 0.004f;
 			cameraBeta += deltaY * 0.004f;
 
-			if (cameraBeta > PI / 2) cameraBeta = PI / 2;
-			if (cameraBeta < -PI / 2) cameraBeta = -PI / 2;
+			float lim = PI / 2 - 0.01;
+			if (cameraBeta > lim) cameraBeta = lim;
+			if (cameraBeta < -lim) cameraBeta = -lim;
 		}
 
 		previousMousePosition = currentMousePosition;

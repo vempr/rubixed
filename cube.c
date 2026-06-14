@@ -1,3 +1,4 @@
+#include <raylib.h>
 #include "cube.h"
 
 const int COLOR_INTERNAL = 0; // black (non-stickered internals are black in cubes)
@@ -34,7 +35,7 @@ void init_cube(RubiksCube *cube) {
 }
 
 void cycle_colors(int colors[6], enum FACE f1,  enum FACE f2,  enum FACE f3,  enum FACE f4, int clockwise) {
-	if (clockwise) {
+	if (clockwise == 1) {
 		int temp = colors[f4];
 		colors[f4] = colors[f3];
 		colors[f3] = colors[f2];
@@ -49,50 +50,154 @@ void cycle_colors(int colors[6], enum FACE f1,  enum FACE f2,  enum FACE f3,  en
 	}
 }
 
+static void rotate_piece(Cube *p, Axis axis, int dir) {
+	int x = p->x;
+	int y = p->y;
+	int z = p->z;
+
+	switch(axis) {
+		case AXIS_X:
+			p->y = dir ? -z : z;
+			p->z = dir ? y : -y;
+
+			cycle_colors(
+				p->colors,
+				FACE_UP, 
+				FACE_BACK,
+				FACE_DOWN,
+				FACE_FRONT,
+				dir
+			);
+			break;
+
+		case AXIS_Y:
+			p->x = dir ? -z : z;
+			p->z = dir ? x : -x;
+
+			cycle_colors(
+				p->colors,
+				FACE_FRONT,
+				FACE_RIGHT,
+				FACE_BACK,
+				FACE_LEFT,
+				dir
+			);
+			break;
+
+		case AXIS_Z:
+			p->x = dir ? -y : y;
+			p->y = dir ? x : -x;
+
+			cycle_colors(
+				p->colors,
+				FACE_UP,
+				FACE_RIGHT,
+				FACE_DOWN,
+				FACE_LEFT,
+				dir
+			);
+			break;
+	}
+}
+
 void rotate_face(RubiksCube *cube, enum FACE face, int clockwise) {
+	Axis axis;
+	int layer;
+	int dir;
+
+	switch(face) {
+		case FACE_RIGHT:
+			axis = AXIS_X;
+			layer = 1;
+			dir = clockwise;
+			break;
+		
+		case FACE_LEFT:
+			axis = AXIS_X;
+			layer = -1;
+			dir = -clockwise;
+			break;
+		
+		case FACE_UP:
+			axis = AXIS_Y;
+			layer = 1;
+			dir = clockwise;
+			break;
+		
+		case FACE_DOWN:
+			axis = AXIS_Y;
+			layer = -1;
+			dir = !clockwise;
+			break;
+
+		case FACE_FRONT:
+			axis = AXIS_Z;
+			layer = 1;
+			dir = clockwise;
+			break;
+		
+		case FACE_BACK:
+			axis = AXIS_Z;
+			layer = -1;
+			dir = !clockwise;
+			break;
+	}
+
 	for (int i = 0; i < 27; i++) {
 		Cube *p = &cube->pieces[i];
 
-		int should_rotate = 0;
-		if (face == FACE_RIGHT && p->x == 1) should_rotate = 1;
-		if (face == FACE_LEFT && p->x == -1) should_rotate = 1;
-		if (face == FACE_UP && p->y == 1) should_rotate = 1;
-		if (face == FACE_DOWN && p->y == -1) should_rotate = 1;
-		if (face == FACE_FRONT && p->z == 1) should_rotate = 1;
-		if (face == FACE_BACK && p->z == -1) should_rotate = 1;
+		int selected = 0;
 
-		if (!should_rotate) continue;
+		if (axis == AXIS_X && p->x == layer) selected = 1;
+		if (axis == AXIS_Y && p->y == layer) selected = 1;
+		if (axis == AXIS_Z && p->z == layer) selected = 1;
 
-		// update piece positions, then colors
-
-		int old_x = p->x;
-		int old_y = p->y;
-		int old_z = p->z;
-
-		if (face == FACE_RIGHT) {
-			p->y = clockwise ? -old_z : old_z;
-			p->z = clockwise ? old_y : -old_y;
-			cycle_colors(p->colors, FACE_UP, FACE_BACK, FACE_DOWN, FACE_FRONT, clockwise);
-		} else if (face == FACE_LEFT) {
-			p->y = clockwise ? -old_z : old_z;
-			p->z = clockwise ? old_y : -old_y;
-			cycle_colors(p->colors, FACE_UP, FACE_FRONT, FACE_DOWN, FACE_BACK, clockwise);
-		} else if (face == FACE_UP) {
-			p->x = clockwise ? old_z : -old_z;
-			p->z = clockwise ? -old_x : old_x;
-			cycle_colors(p->colors, FACE_FRONT, FACE_LEFT, FACE_BACK, FACE_RIGHT, clockwise);
-		} else if (face == FACE_DOWN) {
-			p->x = clockwise ? old_z : -old_z;
-			p->z = clockwise ? -old_x : old_x;
-			cycle_colors(p->colors, FACE_FRONT, FACE_RIGHT, FACE_BACK, FACE_LEFT, clockwise);
-		} else if (face == FACE_FRONT) {
-			p->x = clockwise ? -old_y : old_y;
-			p->y = clockwise ? old_x : -old_x;
-			cycle_colors(p->colors, FACE_UP, FACE_RIGHT, FACE_DOWN, FACE_LEFT, clockwise);
-		} else if (face == FACE_BACK) {
-			p->x = clockwise ? -old_y : old_y;
-			p->y = clockwise ? old_x : -old_x;
-			cycle_colors(p->colors, FACE_UP, FACE_LEFT, FACE_DOWN, FACE_RIGHT, clockwise);
-		}
+		if (selected) rotate_piece(p, axis, dir);
 	}
+}
+
+static void rotate_cube_axis(RubiksCube *cube, Axis axis, int clockwise) {
+	int dir = clockwise ? 1 : 0;
+	for (int i = 0; i < 27; i++) {
+		rotate_piece(&cube->pieces[i], axis, dir);
+	}
+}
+
+void handle_cube_inputs(RubiksCube *cube) {
+	int shiftActive = 0;
+
+	if (IsKeyDown(KEY_LEFT_SHIFT)) {
+		shiftActive = 1;
+		if (IsKeyPressed(KEY_I)) { rotate_cube_axis(cube, AXIS_X, 1); }
+		if (IsKeyPressed(KEY_F)) { rotate_cube_axis(cube, AXIS_X, 1); }
+		if (IsKeyPressed(KEY_H)) { rotate_cube_axis(cube, AXIS_Y, 1); }
+	}
+
+	if (IsKeyDown(KEY_RIGHT_SHIFT)) {
+		shiftActive = 1;
+		if (IsKeyPressed(KEY_I)) { rotate_cube_axis(cube, AXIS_Y, 0); }
+		if (IsKeyPressed(KEY_F)) { rotate_cube_axis(cube, AXIS_Z, 0); }
+		if (IsKeyPressed(KEY_H)) { rotate_cube_axis(cube, AXIS_Z, 0); }
+	}
+
+	if (shiftActive) return;
+
+	int activeTarget = -1;
+	int isClockwise = 0;
+
+	if (IsKeyPressed(KEY_I)) { activeTarget = FACE_RIGHT; isClockwise = 1; }
+	else if (IsKeyPressed(KEY_K)) { activeTarget = FACE_RIGHT; isClockwise = 0; }
+	else if (IsKeyPressed(KEY_E)) { activeTarget = FACE_LEFT; isClockwise = 1; }
+	else if (IsKeyPressed(KEY_D)) { activeTarget = FACE_LEFT; isClockwise = 0; }
+	else if (IsKeyPressed(KEY_F)) { activeTarget = FACE_UP; isClockwise = 1; }
+	else if (IsKeyPressed(KEY_J)) { activeTarget = FACE_UP; isClockwise = 0; }
+	else if (IsKeyPressed(KEY_S)) { activeTarget = FACE_DOWN; isClockwise = 1; }
+	else if (IsKeyPressed(KEY_W)) { activeTarget = FACE_DOWN; isClockwise = 0; }
+	else if (IsKeyPressed(KEY_H)) { activeTarget = FACE_FRONT; isClockwise = 1; }
+	else if (IsKeyPressed(KEY_G)) { activeTarget = FACE_FRONT; isClockwise = 0; }
+	else if (IsKeyPressed(KEY_R)) { activeTarget = FACE_BACK; isClockwise = 1; }
+	else if (IsKeyPressed(KEY_Y)) { activeTarget = FACE_BACK; isClockwise = 0; }
+	else { return; }
+
+	rotate_face(cube, activeTarget, isClockwise);
 }
