@@ -15,4 +15,4 @@ else
 endif
 
 all:
-	gcc main.c cube.c -o $(TARGET) $(LIBS)
+	gcc main.c cube.c draw.c -o $(TARGET) $(LIBS)

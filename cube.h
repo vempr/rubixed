@@ -22,5 +22,6 @@ typedef struct {
 
 void rotate_face(RubiksCube *cube, enum FACE face, int clockwise);
 void init_cube(RubiksCube *cube);
+void draw_cube(RubiksCube *cube);
 
 #endif
