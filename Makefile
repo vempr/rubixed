@@ -21,6 +21,7 @@ all:
 	cube.c \
 	draw.c \
 	scramble.c \
+	anim.c \
 	ckociemba/coordcube.c \
 	ckociemba/cubiecube.c \
 	ckociemba/facecube.c \

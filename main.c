@@ -2,18 +2,22 @@
 #include <raylib.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include "cube.h"
 #include "scramble.h"
+#include "anim.h"
 
 int main(void) {
 	RubiksCube myCube;
 	init_cube(&myCube);
 	scramble_init("cache");
-	apply_scramble(&myCube, "U D");
 	char* currentScramble = NULL;
 
 	CubeAnim anim = {0};
 	anim.active = 0;
+	ScrambleAnim scrAnim = {0};
+	scrAnim.active = 0;
+	PendingMove pendingMove = {0};
 
 	const int screenWidth = 800;
 	const int screenHeight = 600;
@@ -41,14 +45,79 @@ int main(void) {
 		if (currentHeight <= 0) currentHeight = 1;
 
 		if (anim.active) {
-			anim.angle += 360.0f * GetFrameTime();
+			anim.angle += 720.0f * GetFrameTime();
 			if (anim.angle >= 90.0f) {
 				anim.angle = 90.0f;
 				anim.active = 0;
+
+				if (pendingMove.active) {
+					rotate_face(&myCube, pendingMove.face, pendingMove.clockwise);
+					pendingMove.active = 0;
+				}
 			}
 		}
 
 		handle_cube_inputs(&myCube, &anim);
+
+		if (scrAnim.active && !anim.active) {
+			if (scrAnim.current < scrAnim.moveCount) {
+				char* move = scrAnim.moves[scrAnim.current];
+				
+				int face;
+				int clockwise = 1;
+
+				switch(move[0]) {
+					case 'R': face = FACE_RIGHT; break;
+					case 'L': face = FACE_LEFT; break;
+					case 'U': face = FACE_UP; break;
+					case 'D': face = FACE_DOWN; break;
+					case 'F': face = FACE_FRONT; break;
+					case 'B': face = FACE_BACK; break;
+					default:
+						fprintf(stderr, "Critical move: %s\n", move[0]);
+						break;
+				}
+
+				if (move[1] == '\'') clockwise = 0;
+
+				anim.active = 1;
+				anim.dir = clockwise;
+				anim.angle = 0.0f;
+				anim.pieceCount = 0;
+				anim.axis =
+					face == FACE_RIGHT || face == FACE_LEFT ? AXIS_X :
+					face == FACE_UP || face == FACE_DOWN ? AXIS_Y :
+					AXIS_Z;
+				
+				int layer = face == FACE_RIGHT || face == FACE_UP || face == FACE_FRONT ? 1 : -1;
+
+				for (int i = 0; i < 27; i++) {
+					Cube *p = &myCube.pieces[i];
+
+					int selected = 0;
+
+					if (anim.axis == AXIS_X && p->x == layer) selected = 1;
+					if (anim.axis == AXIS_Y && p->y == layer) selected = 1;
+					if (anim.axis == AXIS_Z && p->z == layer) selected = 1;
+
+					if (selected) {
+						int idx = anim.pieceCount++;
+						anim.indices[idx] = i;
+						anim.startPos[idx] = (Vector3){(float)p->x, (float)p->y, (float)p->z};
+						anim.startOrient[idx] = p->orient;
+						memcpy(anim.startColors[idx], p->colors, 6*sizeof(int));
+					}
+				}
+
+				pendingMove.active = 1;
+				pendingMove.face = face;
+				pendingMove.clockwise = clockwise;
+
+				scrAnim.current++;
+			} else {
+				scrAnim.active = 0;
+			}
+		}
 
 		if (IsKeyPressed(KEY_ENTER)) {
 			free(currentScramble);
@@ -61,7 +130,8 @@ int main(void) {
 			printf("solution: [%s]\n", solutionStr);
 			printf("inverse: [%s]\n", currentScramble);
 			
-			apply_scramble(&myCube, currentScramble);
+			parse_scramble(currentScramble, &scrAnim);
+
 			free(solutionStr);
 		} else if (IsKeyPressed(KEY_BACKSPACE)) {
 			free(currentScramble);

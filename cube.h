@@ -40,6 +40,12 @@ typedef struct {
 	int startColors[27][6];
 } CubeAnim;
 
+typedef struct {
+	int active;
+	Face face;
+	int clockwise;
+} PendingMove;
+
 void rotate_face(RubiksCube *cube, Face face, int clockwise);
 void init_cube(RubiksCube *cube);
 void draw_cube(RubiksCube *cube, CubeAnim *anim);
