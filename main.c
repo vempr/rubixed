@@ -1,6 +1,7 @@
 #include <math.h>
 #include <raylib.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include "cube.h"
 #include "scramble.h"
 
@@ -8,6 +9,7 @@ int main(void) {
 	RubiksCube myCube;
 	init_cube(&myCube);
 	scramble_init("cache");
+	apply_scramble(&myCube, "U D");
 	char* currentScramble = NULL;
 
 	CubeAnim anim = {0};
@@ -51,15 +53,20 @@ int main(void) {
 		if (IsKeyPressed(KEY_ENTER)) {
 			free(currentScramble);
 			init_cube(&myCube);
+			anim = (CubeAnim){ 0 };
 
 			char* solutionStr = generate_scramble(21);
 			currentScramble = invert_scramble(solutionStr);
+
+			printf("solution: [%s]\n", solutionStr);
+			printf("inverse: [%s]\n", currentScramble);
 			
 			apply_scramble(&myCube, currentScramble);
 			free(solutionStr);
 		} else if (IsKeyPressed(KEY_BACKSPACE)) {
 			free(currentScramble);
 			init_cube(&myCube);
+			anim = (CubeAnim){ 0 };
 
 			currentScramble = NULL;
 		}

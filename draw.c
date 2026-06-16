@@ -4,7 +4,7 @@
 #include "cube.h"
 
 // debug color (Color){0,0,0,100}
-const Color INTERNAL_COLOR = BLACK;
+const Color INTERNAL_COLOR = (Color){0,0,0,100};
 const float SIZE = 1.0f, STICKER_SIZE = 0.9f, OFFSET = 0.01f, THICKNESS = 0.01f;
 
 static Color GetRaylibColor(int ci) {
@@ -132,7 +132,7 @@ void draw_cube(RubiksCube *cube, CubeAnim *anim) {
       Vector3 startPos = anim->startPos[i];
       Matrix rotMat = QuaternionToMatrix(animRot);
       Vector3 currentPos = Vector3Transform(startPos, rotMat);
-      Quaternion currentOrient = QuaternionMultiply(animRot, anim->startOrient[i]);
+      Quaternion currentOrient = QuaternionNormalize(QuaternionMultiply(animRot, anim->startOrient[i]));
       draw_piece(currentPos, currentOrient, anim->startColors[i]);
     }
   }

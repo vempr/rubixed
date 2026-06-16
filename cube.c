@@ -97,27 +97,35 @@ static Quaternion get_rotation_quaternion(Axis axis, int dir) {
 }
 
 static void rotate_piece(Cube *p, Axis axis, int dir) {
-	int x = p->x, y = p->y, z = p->z;
+	// int x = p->x, y = p->y, z = p->z;
 
-	switch(axis) {
-		case AXIS_X:
-			p->y = dir ? -z : z;
-			p->z = dir ? y : -y;
-			break;
+	// switch(axis) {
+	// 	case AXIS_X:
+	// 		p->y = dir ? z : -z;
+	// 		p->z = dir ? -y : y;
+	// 		break;
 
-		case AXIS_Y:
-			p->x = dir ? -z : z;
-			p->z = dir ? x : -x;
-			break;
+	// 	case AXIS_Y:
+	// 		p->x = dir ? -z : z;
+	// 		p->z = dir ? x : -x;
+	// 		break;
 
-		case AXIS_Z:
-			p->x = dir ? -y : y;
-			p->y = dir ? x : -x;
-			break;
-	}
+	// 	case AXIS_Z:
+	// 		p->x = dir ? y : -y;
+	// 		p->y = dir ? -x : x;
+	// 		break;
+	// }
 
 	Quaternion q = get_rotation_quaternion(axis, dir);
-	p->orient = QuaternionMultiply(q, p->orient);
+
+	Vector3 pos = {(float)p->x, (float)p->y, (float)p->z};
+	Vector3 rotated = Vector3Transform(pos, QuaternionToMatrix(q));
+
+	p->x = (int)lroundf(rotated.x);
+	p->y = (int)lroundf(rotated.y);
+	p->z = (int)lroundf(rotated.z);
+
+	p->orient = QuaternionNormalize(QuaternionMultiply(q, p->orient));
 	
 	// deprecated: replaced with quaternion system
 	// printf("Piece at (%d,%d,%d) rotating on axis %d. Result: (%d,%d,%d)\n",
@@ -142,37 +150,37 @@ void rotate_face(RubiksCube *cube, Face face, int clockwise) {
 		case FACE_RIGHT:
 			axis = AXIS_X;
 			layer = 1;
-			dir = clockwise ? 0 : 1;
+			dir = clockwise ? 1 : 0;
 			break;
 		
 		case FACE_LEFT:
 			axis = AXIS_X;
 			layer = -1;
-			dir = clockwise ? 1 : 0;
+			dir = clockwise ? 0 : 1;
 			break;
 		
 		case FACE_UP:
 			axis = AXIS_Y;
 			layer = 1;
-			dir = clockwise ? 0 : 1;
+			dir = clockwise ? 1 : 0;
 			break;
 		
 		case FACE_DOWN:
 			axis = AXIS_Y;
 			layer = -1;
-			dir = clockwise ? 1 : 0;
+			dir = clockwise ? 0 : 1;
 			break;
 
 		case FACE_FRONT:
 			axis = AXIS_Z;
 			layer = 1;
-			dir = clockwise ? 0 : 1;
+			dir = clockwise ? 1 : 0;
 			break;
 		
 		case FACE_BACK:
 			axis = AXIS_Z;
 			layer = -1;
-			dir = clockwise ? 1 : 0;
+			dir = clockwise ? 0 : 1;
 			break;
 	}
 
@@ -294,12 +302,12 @@ void handle_cube_inputs(RubiksCube *cube, CubeAnim *anim) {
 		case FACE_UP:
 			axis = AXIS_Y;
 			layer = 1;
-			dir = isClockwise ? 0 : 1;
+			dir = isClockwise ? 1 : 0;
 			break;
 		case FACE_DOWN:
 			axis = AXIS_Y;
 			layer = -1;
-			dir = isClockwise ? 1 : 0;
+			dir = isClockwise ? 0 : 1;
 			break;
 		case FACE_FRONT:
 			axis = AXIS_Z;
@@ -332,7 +340,7 @@ void handle_cube_inputs(RubiksCube *cube, CubeAnim *anim) {
 			int idx = anim->pieceCount++;
 			anim->indices[idx] = i;
 			anim->startPos[idx] = (Vector3){(float)p->x, (float)p->y, (float)p->z};
-			anim->startOrient[i] = p->orient;
+			anim->startOrient[idx] = p->orient;
 			memcpy(anim->startColors[idx], p->colors, 6*sizeof(int));
 		}
 	}

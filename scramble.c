@@ -1,5 +1,6 @@
 #include "scramble.h"
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <time.h>
 
@@ -79,7 +80,9 @@ void apply_scramble(RubiksCube* cube, const char* scramble) {
         case 'D': face = FACE_DOWN; break;
         case 'F': face = FACE_FRONT; break;
         case 'B': face = FACE_BACK; break;
-        default: continue;;
+        default:
+          fprintf(stderr, "Critical move: %s\n", token);
+          break;
       }
 
       if (token[1] == '\'') {
