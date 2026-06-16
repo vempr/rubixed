@@ -21,6 +21,7 @@ typedef enum {
 typedef struct {
 	int x, y, z;
 	int colors[6]; // each piece has 1-3 colors (except core), e.g. corner piece has 3 stickers/colors
+	Quaternion orient;
 } Cube;
 
 typedef struct {
@@ -35,6 +36,7 @@ typedef struct {
 	int pieceCount;
 	int indices[27];
 	Vector3 startPos[27];
+	Quaternion startOrient[27];
 	int startColors[27][6];
 } CubeAnim;
 

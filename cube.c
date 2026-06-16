@@ -1,5 +1,7 @@
 #include <raylib.h>
+#include <raymath.h>
 #include <string.h>
+#include <stdio.h>
 #include "cube.h"
 
 const int COLOR_INTERNAL = 0; // black (non-stickered internals are black in cubes)
@@ -32,6 +34,8 @@ void init_cube(RubiksCube *cube) {
 		if (cube->pieces[i].y == -1) cube->pieces[i].colors[FACE_DOWN] = COLOR_DOWN;
 		if (cube->pieces[i].z == 1) cube->pieces[i].colors[FACE_FRONT] = COLOR_FRONT;
 		if (cube->pieces[i].z == -1) cube->pieces[i].colors[FACE_BACK] = COLOR_BACK;
+	
+		cube->pieces[i].orient = QuaternionIdentity();
 	}
 }
 
@@ -53,37 +57,47 @@ void init_cube(RubiksCube *cube) {
 // 	}
 // }
 
-static int rotate_face_index(int f, Axis axis, int dir) {
+// deprecated: replaced with quaternion system
+// static int rotate_face_index(int f, Axis axis, int dir) {
+// 	switch (axis) {
+// 		case AXIS_X:
+// 			if (f == FACE_UP) return dir ? FACE_BACK : FACE_FRONT;
+// 			if (f == FACE_BACK) return dir ? FACE_DOWN : FACE_UP;
+// 			if (f == FACE_DOWN) return dir ? FACE_FRONT : FACE_BACK;
+// 			if (f == FACE_FRONT) return dir ? FACE_UP : FACE_DOWN;
+// 			return f;
+		
+// 		case AXIS_Y:
+// 			if (f == FACE_FRONT) return dir ? FACE_RIGHT : FACE_LEFT;
+// 			if (f == FACE_RIGHT) return dir ? FACE_BACK : FACE_FRONT;
+// 			if (f == FACE_BACK) return dir ? FACE_LEFT : FACE_RIGHT;
+// 			if (f == FACE_LEFT) return dir ? FACE_FRONT : FACE_BACK;
+// 			return f;
+		
+// 		case AXIS_Z:
+// 			if (f == FACE_UP) return dir ? FACE_RIGHT : FACE_LEFT;
+// 			if (f == FACE_LEFT) return dir ? FACE_UP : FACE_DOWN;
+// 			if (f == FACE_DOWN) return dir ? FACE_LEFT : FACE_RIGHT;
+// 			if (f == FACE_RIGHT) return dir ? FACE_DOWN : FACE_UP;
+// 			return f;
+// 	}
+
+// 	return f;
+// }
+
+static Quaternion get_rotation_quaternion(Axis axis, int dir) {
+	Vector3 axisVec;
 	switch (axis) {
-		case AXIS_X:
-			if (f == FACE_UP) return dir ? FACE_BACK : FACE_FRONT;
-			if (f == FACE_BACK) return dir ? FACE_DOWN : FACE_UP;
-			if (f == FACE_DOWN) return dir ? FACE_FRONT : FACE_BACK;
-			if (f == FACE_FRONT) return dir ? FACE_UP : FACE_DOWN;
-			return f;
-		
-		case AXIS_Y:
-			if (f == FACE_FRONT) return dir ? FACE_RIGHT : FACE_LEFT;
-			if (f == FACE_RIGHT) return dir ? FACE_BACK : FACE_FRONT;
-			if (f == FACE_BACK) return dir ? FACE_LEFT : FACE_RIGHT;
-			if (f == FACE_LEFT) return dir ? FACE_FRONT : FACE_BACK;
-			return f;
-		
-		case AXIS_Z:
-			if (f == FACE_UP) return dir ? FACE_RIGHT : FACE_LEFT;
-			if (f == FACE_LEFT) return dir ? FACE_UP : FACE_DOWN;
-			if (f == FACE_DOWN) return dir ? FACE_LEFT : FACE_RIGHT;
-			if (f == FACE_RIGHT) return dir ? FACE_DOWN : FACE_UP;
-			return f;
+		case AXIS_X: axisVec = (Vector3){1.0f, 0.0f, 0.0f}; break;
+		case AXIS_Y: axisVec = (Vector3){0.0f, 1.0f, 0.0f}; break;
+		case AXIS_Z: axisVec = (Vector3){0.0f, 0.0f, 1.0f}; break;
 	}
 
-	return f;
+	return QuaternionFromAxisAngle(axisVec, dir ? -PI/2 : PI/2);
 }
 
 static void rotate_piece(Cube *p, Axis axis, int dir) {
-	int x = p->x;
-	int y = p->y;
-	int z = p->z;
+	int x = p->x, y = p->y, z = p->z;
 
 	switch(axis) {
 		case AXIS_X:
@@ -102,21 +116,27 @@ static void rotate_piece(Cube *p, Axis axis, int dir) {
 			break;
 	}
 
-	int temp[6];
-	for (int i = 0; i < 6; i++) {
-		temp[i] = p->colors[i];
-	}
+	Quaternion q = get_rotation_quaternion(axis, dir);
+	p->orient = QuaternionMultiply(q, p->orient);
+	
+	// deprecated: replaced with quaternion system
+	// printf("Piece at (%d,%d,%d) rotating on axis %d. Result: (%d,%d,%d)\n",
+	// 	x, y, z, axis, p->x, p->y, p->z);
 
-	for (int i = 0; i < 6; i++) {
-		int new_face = rotate_face_index(i, axis, dir);
-		p->colors[i] = temp[new_face];
-	}
+	// int temp[6];
+	// for (int i = 0; i < 6; i++) {
+	// 	temp[i] = p->colors[i];
+	// }
+
+	// for (int i = 0; i < 6; i++) {
+	// 	int new_face = rotate_face_index(i, axis, dir);
+	// 	p->colors[i] = temp[new_face];
+	// }
 }
 
 void rotate_face(RubiksCube *cube, Face face, int clockwise) {
 	Axis axis;
-	int layer;
-	int dir;
+	int layer, dir;
 
 	switch(face) {
 		case FACE_RIGHT:
@@ -170,9 +190,8 @@ void rotate_face(RubiksCube *cube, Face face, int clockwise) {
 }
 
 static void rotate_cube_axis(RubiksCube *cube, Axis axis, int clockwise) {
-	int dir = clockwise ? 1 : 0;
 	for (int i = 0; i < 27; i++) {
-		rotate_piece(&cube->pieces[i], axis, dir);
+		rotate_piece(&cube->pieces[i], axis, clockwise);
 	}
 }
 
@@ -214,8 +233,6 @@ void handle_cube_inputs(RubiksCube *cube, CubeAnim *anim) {
 		}
 
 		if (clockwise != -1) {
-			rotate_cube_axis(cube, axis, clockwise);
-
 			anim->active = 1;
 			anim->angle = 0.0f;
 			anim->pieceCount = 27;
@@ -226,17 +243,25 @@ void handle_cube_inputs(RubiksCube *cube, CubeAnim *anim) {
 				anim->indices[i] = i;
 				Cube *p = &cube->pieces[i];
 				anim->startPos[i] = (Vector3){(float)p->x, (float)p->y, (float)p->z};
+				anim->startOrient[i] = p->orient;
+
+				// int newColors[6];
+				// for (int j = 0; j < 6; j++) {
+				// 	int src = rotate_face_index(j, axis, clockwise);
+				// 	newColors[j] = p->colors[src];
+				// }
+
+				// memcpy(anim->startColors[i], newColors, 6*sizeof(int));
 				memcpy(anim->startColors[i], p->colors, 6*sizeof(int));
 			}
-		}
 
-		
+			rotate_cube_axis(cube, axis, clockwise);
+		}
 
 		return;
 	}
 
-	int activeTarget = -1;
-	int isClockwise = 0;
+	int activeTarget = -1, isClockwise = 0;
 
 	if (IsKeyPressed(KEY_I)) { activeTarget = FACE_RIGHT; isClockwise = 1; }
 	else if (IsKeyPressed(KEY_K)) { activeTarget = FACE_RIGHT; isClockwise = 0; }
@@ -253,8 +278,7 @@ void handle_cube_inputs(RubiksCube *cube, CubeAnim *anim) {
 	else { return; }
 
 	Axis axis;
-	int layer;
-	int dir;
+	int layer, dir;
 
 	switch (activeTarget) {
 		case FACE_RIGHT:
@@ -308,6 +332,7 @@ void handle_cube_inputs(RubiksCube *cube, CubeAnim *anim) {
 			int idx = anim->pieceCount++;
 			anim->indices[idx] = i;
 			anim->startPos[idx] = (Vector3){(float)p->x, (float)p->y, (float)p->z};
+			anim->startOrient[i] = p->orient;
 			memcpy(anim->startColors[idx], p->colors, 6*sizeof(int));
 		}
 	}

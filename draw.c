@@ -3,8 +3,9 @@
 #include <rlgl.h>
 #include "cube.h"
 
-const Color INTERNAL_COLOR = BLACK;
 // debug color (Color){0,0,0,100}
+const Color INTERNAL_COLOR = BLACK;
+const float SIZE = 1.0f, STICKER_SIZE = 0.9f, OFFSET = 0.01f, THICKNESS = 0.01f;
 
 static Color GetRaylibColor(int ci) {
   switch(ci) {
@@ -18,71 +19,71 @@ static Color GetRaylibColor(int ci) {
   };
 }
 
-static void draw_piece(Vector3 center, Matrix rotation, int colors[6]) {
+static void draw_piece(Vector3 center, Quaternion orient, int colors[6]) {
   rlPushMatrix();
   rlTranslatef(center.x, center.y, center.z);
-  rlMultMatrixf(MatrixToFloat(rotation));
-  
-  float size = 1.0f;
-  float stickerSize = 0.9f;
-  float offset = 0.01f;
-  float thickness = 0.01f;
 
+  // deprecated: replaced with quaternion system
+  //rlMultMatrixf(MatrixToFloat(rotation));
   // Matrix matModel = rlGetMatrixModelview();
   // Vector3 worldCenter = (Vector3){matModel.m12, matModel.m13, matModel.m14};
-  DrawCube((Vector3){0.0f, 0.0f, 0.0f}, size, size, size, INTERNAL_COLOR);
+  
+  Matrix rotMat = QuaternionToMatrix(orient);
+  rlMultMatrixf(MatrixToFloat(rotMat));
+
+  DrawCube((Vector3){0.0f, 0.0f, 0.0f}, SIZE, SIZE, SIZE, INTERNAL_COLOR);
 
   if (colors[FACE_RIGHT] != 0) {
     DrawCube(
-      (Vector3){size/2.0f + offset, 0.0f, 0.0f},
-      thickness,
-      stickerSize,
-      stickerSize,
+      (Vector3){SIZE/2.0f + OFFSET, 0.0f, 0.0f},
+      THICKNESS,
+      STICKER_SIZE,
+      STICKER_SIZE,
       GetRaylibColor(colors[FACE_RIGHT])
     );
   }
   if (colors[FACE_LEFT] != 0) {
     DrawCube(
-      (Vector3){-size/2.0f - offset, 0.0f, 0.0f},
-      thickness,
-      stickerSize,
-      stickerSize,
+      (Vector3){-SIZE/2.0f - OFFSET, 0.0f, 0.0f},
+      THICKNESS,
+      STICKER_SIZE,
+      STICKER_SIZE,
       GetRaylibColor(colors[FACE_LEFT])
     );
   }
   if (colors[FACE_UP] != 0) {
     DrawCube(
-      (Vector3){0.0f, size/2.0f + offset, 0.0f},
-      stickerSize,
-      thickness,
-      stickerSize,
+      (Vector3){0.0f, SIZE/2.0f + OFFSET, 0.0f},
+      STICKER_SIZE,
+      THICKNESS,
+      STICKER_SIZE,
       GetRaylibColor(colors[FACE_UP])
     );
   }
   if (colors[FACE_DOWN] != 0) {
     DrawCube(
-      (Vector3){0.0f, -size/2.0f - offset, 0.0f},
-      stickerSize,
-      thickness,
-      stickerSize,
+      (Vector3){0.0f, -SIZE/2.0f - OFFSET, 0.0f},
+      STICKER_SIZE,
+      THICKNESS,
+      STICKER_SIZE,
       GetRaylibColor(colors[FACE_DOWN])
     );
   }
   if (colors[FACE_FRONT] != 0) {
     DrawCube(
-      (Vector3){0.0f, 0.0f, size/2.0f + offset},
-      stickerSize,
-      stickerSize,
-      thickness,
+      (Vector3){0.0f, 0.0f, SIZE/2.0f + OFFSET},
+      STICKER_SIZE,
+      STICKER_SIZE,
+      THICKNESS,
       GetRaylibColor(colors[FACE_FRONT])
     );
   }
   if (colors[FACE_BACK] != 0) {
     DrawCube(
-      (Vector3){0.0f, 0.0f, -size/2.0f - offset},
-      stickerSize,
-      stickerSize,
-      thickness,
+      (Vector3){0.0f, 0.0f, -SIZE/2.0f - OFFSET},
+      STICKER_SIZE,
+      STICKER_SIZE,
+      THICKNESS,
       GetRaylibColor(colors[FACE_BACK])
     );
   }
@@ -91,11 +92,6 @@ static void draw_piece(Vector3 center, Matrix rotation, int colors[6]) {
 }
 
 void draw_cube(RubiksCube *cube, CubeAnim *anim) {
-  float size = 1.0f;
-  float stickerSize = 0.9f;
-  float offset = 0.01f;
-  float thickness = 0.01f;
-
   int animated[27] = {0};
   if (anim && anim->active) {
     for (int i = 0; i < anim->pieceCount; i++) {
@@ -109,24 +105,35 @@ void draw_cube(RubiksCube *cube, CubeAnim *anim) {
     Cube *p = &cube->pieces[i];
     Vector3 pos = {(float)p->x, (float)p->y, (float)p->z};
 
-    draw_piece(pos, MatrixIdentity(), p->colors);
+    draw_piece(pos, p->orient, p->colors);
   }
 
   if (anim && anim->active) {
     float angleRad = anim->angle * DEG2RAD;
     float sign = (anim->dir == 0) ? 1.0f : -1.0f;
-    
-    // rotation matrix
-    Matrix rotMat;
-    if (anim->axis == AXIS_X) rotMat = MatrixRotateX(sign * angleRad);
-    if (anim->axis == AXIS_Y) rotMat = MatrixRotateY(sign * angleRad);
-    if (anim->axis == AXIS_Z) rotMat = MatrixRotateZ(sign * angleRad);
+
+    // deprecated
+    // Matrix rotMat;
+    // if (anim->axis == AXIS_X) rotMat = MatrixRotateX(sign * angleRad);
+    // if (anim->axis == AXIS_Y) rotMat = MatrixRotateY(sign * angleRad);
+    // if (anim->axis == AXIS_Z) rotMat = MatrixRotateZ(sign * angleRad);
+
+    Vector3 animAxis;
+    switch (anim->axis) {
+      case AXIS_X: animAxis = (Vector3){1.0f, 0.0f, 0.0f}; break;
+      case AXIS_Y: animAxis = (Vector3){0.0f, 1.0f, 0.0f}; break;
+      case AXIS_Z: animAxis = (Vector3){0.0f, 0.0f, 1.0f}; break;
+    }
+    Quaternion animRot = QuaternionFromAxisAngle(animAxis, sign * angleRad);
 
     for (int i = 0; i < anim->pieceCount; i++) {
       int idx = anim->indices[i];
+
       Vector3 startPos = anim->startPos[i];
+      Matrix rotMat = QuaternionToMatrix(animRot);
       Vector3 currentPos = Vector3Transform(startPos, rotMat);
-      draw_piece(currentPos, rotMat, anim->startColors[i]);
+      Quaternion currentOrient = QuaternionMultiply(animRot, anim->startOrient[i]);
+      draw_piece(currentPos, currentOrient, anim->startColors[i]);
     }
   }
 }
