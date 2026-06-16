@@ -177,58 +177,60 @@ static void rotate_cube_axis(RubiksCube *cube, Axis axis, int clockwise) {
 }
 
 void handle_cube_inputs(RubiksCube *cube, CubeAnim *anim) {
+	if (anim->active) return;
+
 	int shiftActive = 0;
-
-	if (IsKeyDown(KEY_LEFT_SHIFT)) {
+	if (IsKeyDown(KEY_LEFT_SHIFT) || IsKeyDown(KEY_RIGHT_SHIFT)) {
 		shiftActive = 1;
-		if (IsKeyPressed(KEY_I)) { rotate_cube_axis(cube, AXIS_X, 1); }
-		if (IsKeyPressed(KEY_F)) { rotate_cube_axis(cube, AXIS_X, 1); }
-		if (IsKeyPressed(KEY_H)) { rotate_cube_axis(cube, AXIS_Y, 1); }
-	}
-
-	if (IsKeyDown(KEY_RIGHT_SHIFT)) {
-		shiftActive = 1;
-		if (IsKeyPressed(KEY_I)) { rotate_cube_axis(cube, AXIS_Y, 0); }
-		if (IsKeyPressed(KEY_F)) { rotate_cube_axis(cube, AXIS_Z, 0); }
-		if (IsKeyPressed(KEY_H)) { rotate_cube_axis(cube, AXIS_Z, 0); }
 	}
 
 	if (shiftActive) {
-		anim->active = 1;
-		anim->angle = 0.0f;
-		anim->pieceCount = 27;
-
-		for (int i = 0; i < 27; i++) {
-			anim->indices[i] = i;
-			Cube *p = &cube->pieces[i];
-			anim->startPos[i] = (Vector3){(float)p->x, (float)p->y, (float)p->z};
-			memcpy(anim->startColors[i], p->colors, 6*sizeof(int));
-		}
+		Axis axis;
+		int clockwise = -1;
 
 		if (IsKeyPressed(KEY_I) && IsKeyDown(KEY_LEFT_SHIFT)) {
-			anim->axis = AXIS_X;
-			anim->dir = 0;
+			axis = AXIS_X;
+			clockwise = 1;
 		}
 		if (IsKeyPressed(KEY_F) && IsKeyDown(KEY_LEFT_SHIFT)) {
-			anim->axis = AXIS_X;
-			anim->dir = 0;
+			axis = AXIS_Y;
+			clockwise = 1;
 		}
 		if (IsKeyPressed(KEY_H) && IsKeyDown(KEY_LEFT_SHIFT)) {
-			anim->axis = AXIS_Y;
-			anim->dir = 0;
+			axis = AXIS_Z;
+			clockwise = 1;
 		}
 		if (IsKeyPressed(KEY_I) && IsKeyDown(KEY_RIGHT_SHIFT)) {
-			anim->axis = AXIS_Y;
-			anim->dir = 1;
+			axis = AXIS_X;
+			clockwise = 0;
 		}
 		if (IsKeyPressed(KEY_F) && IsKeyDown(KEY_RIGHT_SHIFT)) {
-			anim->axis = AXIS_Z;
-			anim->dir = 1;
+			axis = AXIS_Y;
+			clockwise = 0;
 		}
 		if (IsKeyPressed(KEY_H) && IsKeyDown(KEY_RIGHT_SHIFT)) {
-			anim->axis = AXIS_Z;
-			anim->dir = 1;
+			axis = AXIS_Z;
+			clockwise = 0;
 		}
+
+		if (clockwise != -1) {
+			rotate_cube_axis(cube, axis, clockwise);
+
+			anim->active = 1;
+			anim->angle = 0.0f;
+			anim->pieceCount = 27;
+			anim->dir = clockwise;
+			anim->axis = axis;
+
+			for (int i = 0; i < 27; i++) {
+				anim->indices[i] = i;
+				Cube *p = &cube->pieces[i];
+				anim->startPos[i] = (Vector3){(float)p->x, (float)p->y, (float)p->z};
+				memcpy(anim->startColors[i], p->colors, 6*sizeof(int));
+			}
+		}
+
+		
 
 		return;
 	}
@@ -252,35 +254,40 @@ void handle_cube_inputs(RubiksCube *cube, CubeAnim *anim) {
 
 	Axis axis;
 	int layer;
+	int dir;
 
 	switch (activeTarget) {
 		case FACE_RIGHT:
 			axis = AXIS_X;
 			layer = 1;
+			dir = isClockwise ? 1 : 0;
 			break;
 		case FACE_LEFT:
 			axis = AXIS_X;
 			layer = -1;
+			dir = isClockwise ? 0 : 1;
 			break;
 		case FACE_UP:
 			axis = AXIS_Y;
 			layer = 1;
+			dir = isClockwise ? 0 : 1;
 			break;
 		case FACE_DOWN:
 			axis = AXIS_Y;
 			layer = -1;
+			dir = isClockwise ? 1 : 0;
 			break;
 		case FACE_FRONT:
 			axis = AXIS_Z;
 			layer = 1;
+			dir = isClockwise ? 1 : 0;
 			break;
 		case FACE_BACK:
 			axis = AXIS_Z;
 			layer = -1;
+			dir = isClockwise ? 0 : 1;
 			break;
 	}
-
-	int dir = isClockwise ? 0 : 1;
 
 	anim->active = 1;
 	anim->axis = axis;

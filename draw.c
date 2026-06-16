@@ -3,6 +3,9 @@
 #include <rlgl.h>
 #include "cube.h"
 
+const Color INTERNAL_COLOR = BLACK;
+// debug color (Color){0,0,0,100}
+
 static Color GetRaylibColor(int ci) {
   switch(ci) {
     case 1: return RAYWHITE;
@@ -15,16 +18,83 @@ static Color GetRaylibColor(int ci) {
   };
 }
 
-static void draw_piece_rotated(Vector3 center, Axis axis, float angleDeg) {
+static void draw_piece(Vector3 center, Matrix rotation, int colors[6]) {
   rlPushMatrix();
+  rlTranslatef(center.x, center.y, center.z);
+  rlMultMatrixf(MatrixToFloat(rotation));
+  
+  float size = 1.0f;
+  float stickerSize = 0.9f;
+  float offset = 0.01f;
+  float thickness = 0.01f;
+
+  // Matrix matModel = rlGetMatrixModelview();
+  // Vector3 worldCenter = (Vector3){matModel.m12, matModel.m13, matModel.m14};
+  DrawCube((Vector3){0.0f, 0.0f, 0.0f}, size, size, size, INTERNAL_COLOR);
+
+  if (colors[FACE_RIGHT] != 0) {
+    DrawCube(
+      (Vector3){size/2.0f + offset, 0.0f, 0.0f},
+      thickness,
+      stickerSize,
+      stickerSize,
+      GetRaylibColor(colors[FACE_RIGHT])
+    );
+  }
+  if (colors[FACE_LEFT] != 0) {
+    DrawCube(
+      (Vector3){-size/2.0f - offset, 0.0f, 0.0f},
+      thickness,
+      stickerSize,
+      stickerSize,
+      GetRaylibColor(colors[FACE_LEFT])
+    );
+  }
+  if (colors[FACE_UP] != 0) {
+    DrawCube(
+      (Vector3){0.0f, size/2.0f + offset, 0.0f},
+      stickerSize,
+      thickness,
+      stickerSize,
+      GetRaylibColor(colors[FACE_UP])
+    );
+  }
+  if (colors[FACE_DOWN] != 0) {
+    DrawCube(
+      (Vector3){0.0f, -size/2.0f - offset, 0.0f},
+      stickerSize,
+      thickness,
+      stickerSize,
+      GetRaylibColor(colors[FACE_DOWN])
+    );
+  }
+  if (colors[FACE_FRONT] != 0) {
+    DrawCube(
+      (Vector3){0.0f, 0.0f, size/2.0f + offset},
+      stickerSize,
+      stickerSize,
+      thickness,
+      GetRaylibColor(colors[FACE_FRONT])
+    );
+  }
+  if (colors[FACE_BACK] != 0) {
+    DrawCube(
+      (Vector3){0.0f, 0.0f, -size/2.0f - offset},
+      stickerSize,
+      stickerSize,
+      thickness,
+      GetRaylibColor(colors[FACE_BACK])
+    );
+  }
 
   rlPopMatrix();
 }
 
-void draw_cube (RubiksCube *cube, CubeAnim *anim) {
+void draw_cube(RubiksCube *cube, CubeAnim *anim) {
   float size = 1.0f;
   float stickerSize = 0.9f;
   float offset = 0.01f;
+  float thickness = 0.01f;
 
   int animated[27] = {0};
   if (anim && anim->active) {
@@ -39,71 +109,13 @@ void draw_cube (RubiksCube *cube, CubeAnim *anim) {
     Cube *p = &cube->pieces[i];
     Vector3 pos = {(float)p->x, (float)p->y, (float)p->z};
 
-    DrawCube(pos, size, size, size, (Color){0,0,0,100});
-    // for debug (Color){0,0,0,0}
-    
-    // draw stickrs
-
-    if (p->x == 1) {
-      DrawCube(
-        (Vector3){pos.x + size/2 + offset, pos.y, pos.z},
-        0.01f,
-        stickerSize,
-        stickerSize,
-        GetRaylibColor(p->colors[FACE_RIGHT])
-      );
-    }
-    if (p->x == -1) {
-      DrawCube(
-        (Vector3){pos.x - size/2 - offset, pos.y, pos.z},
-        0.01f,
-        stickerSize,
-        stickerSize,
-        GetRaylibColor(p->colors[FACE_LEFT])
-      );
-    }
-    if (p->y == 1) {
-      DrawCube(
-        (Vector3){pos.x, pos.y + size/2 + offset, pos.z},
-        stickerSize,
-        0.01f,
-        stickerSize,
-        GetRaylibColor(p->colors[FACE_UP])
-      );
-    }
-    if (p->y == -1) {
-      DrawCube(
-        (Vector3){pos.x, pos.y - size/2 - offset, pos.z},
-        stickerSize,
-        0.01f,
-        stickerSize,
-        GetRaylibColor(p->colors[FACE_DOWN])
-      );
-    }
-    if (p->z == 1) {
-      DrawCube(
-        (Vector3){pos.x, pos.y, pos.z + size/2 + offset},
-        stickerSize,
-        stickerSize,
-        0.01f,
-        GetRaylibColor(p->colors[FACE_FRONT])
-      );
-    }
-    if (p->z == -1) {
-      DrawCube(
-        (Vector3){pos.x, pos.y, pos.z - size/2 - offset},
-        stickerSize,
-        stickerSize,
-        0.01f,
-        GetRaylibColor(p->colors[FACE_BACK])
-      );
-    }
+    draw_piece(pos, MatrixIdentity(), p->colors);
   }
 
   if (anim && anim->active) {
-    float sign = (anim->dir == 0) ? 1.0f : -1.0f;
     float angleRad = anim->angle * DEG2RAD;
-
+    float sign = (anim->dir == 0) ? 1.0f : -1.0f;
+    
     // rotation matrix
     Matrix rotMat;
     if (anim->axis == AXIS_X) rotMat = MatrixRotateX(sign * angleRad);
@@ -112,10 +124,9 @@ void draw_cube (RubiksCube *cube, CubeAnim *anim) {
 
     for (int i = 0; i < anim->pieceCount; i++) {
       int idx = anim->indices[i];
-      float drawAngle = sign * anim->angle;
       Vector3 startPos = anim->startPos[i];
       Vector3 currentPos = Vector3Transform(startPos, rotMat);
-      draw_piece_rotated(currentPos, anim->axis, drawAngle);
+      draw_piece(currentPos, rotMat, anim->startColors[i]);
     }
   }
 }
