@@ -1,3 +1,5 @@
+#include <raylib.h>
+
 #ifndef CUBE_H
 #define CUBE_H
 
@@ -25,9 +27,20 @@ typedef struct {
 	Cube pieces[27];
 } RubiksCube;
 
+typedef struct {
+	int active;
+	Axis axis;
+	int dir;
+	float angle;
+	int pieceCount;
+	int indices[27];
+	Vector3 startPos[27];
+	int startColors[27][6];
+} CubeAnim;
+
 void rotate_face(RubiksCube *cube, Face face, int clockwise);
 void init_cube(RubiksCube *cube);
-void draw_cube(RubiksCube *cube);
-void handle_cube_inputs(RubiksCube *cube);
+void draw_cube(RubiksCube *cube, CubeAnim *anim);
+void handle_cube_inputs(RubiksCube *cube, CubeAnim *anim);
 
 #endif

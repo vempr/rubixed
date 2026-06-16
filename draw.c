@@ -1,4 +1,6 @@
 #include <raylib.h>
+#include <raymath.h>
+#include <rlgl.h>
 #include "cube.h"
 
 static Color GetRaylibColor(int ci) {
@@ -13,12 +15,27 @@ static Color GetRaylibColor(int ci) {
   };
 }
 
-void draw_cube (RubiksCube *cube) {
+static void draw_piece_rotated(Vector3 center, Axis axis, float angleDeg) {
+  rlPushMatrix();
+
+  rlPopMatrix();
+}
+
+void draw_cube (RubiksCube *cube, CubeAnim *anim) {
   float size = 1.0f;
   float stickerSize = 0.9f;
   float offset = 0.01f;
+
+  int animated[27] = {0};
+  if (anim && anim->active) {
+    for (int i = 0; i < anim->pieceCount; i++) {
+      animated[anim->indices[i]] = 1;
+    }
+  }
   
   for (int i = 0; i < 27; i++) {
+    if (animated[i]) continue;
+
     Cube *p = &cube->pieces[i];
     Vector3 pos = {(float)p->x, (float)p->y, (float)p->z};
 
@@ -80,6 +97,25 @@ void draw_cube (RubiksCube *cube) {
         0.01f,
         GetRaylibColor(p->colors[FACE_BACK])
       );
+    }
+  }
+
+  if (anim && anim->active) {
+    float sign = (anim->dir == 0) ? 1.0f : -1.0f;
+    float angleRad = anim->angle * DEG2RAD;
+
+    // rotation matrix
+    Matrix rotMat;
+    if (anim->axis == AXIS_X) rotMat = MatrixRotateX(sign * angleRad);
+    if (anim->axis == AXIS_Y) rotMat = MatrixRotateY(sign * angleRad);
+    if (anim->axis == AXIS_Z) rotMat = MatrixRotateZ(sign * angleRad);
+
+    for (int i = 0; i < anim->pieceCount; i++) {
+      int idx = anim->indices[i];
+      float drawAngle = sign * anim->angle;
+      Vector3 startPos = anim->startPos[i];
+      Vector3 currentPos = Vector3Transform(startPos, rotMat);
+      draw_piece_rotated(currentPos, anim->axis, drawAngle);
     }
   }
 }

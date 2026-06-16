@@ -1,4 +1,5 @@
 #include <raylib.h>
+#include <string.h>
 #include "cube.h"
 
 const int COLOR_INTERNAL = 0; // black (non-stickered internals are black in cubes)
@@ -175,7 +176,7 @@ static void rotate_cube_axis(RubiksCube *cube, Axis axis, int clockwise) {
 	}
 }
 
-void handle_cube_inputs(RubiksCube *cube) {
+void handle_cube_inputs(RubiksCube *cube, CubeAnim *anim) {
 	int shiftActive = 0;
 
 	if (IsKeyDown(KEY_LEFT_SHIFT)) {
@@ -192,7 +193,45 @@ void handle_cube_inputs(RubiksCube *cube) {
 		if (IsKeyPressed(KEY_H)) { rotate_cube_axis(cube, AXIS_Z, 0); }
 	}
 
-	if (shiftActive) return;
+	if (shiftActive) {
+		anim->active = 1;
+		anim->angle = 0.0f;
+		anim->pieceCount = 27;
+
+		for (int i = 0; i < 27; i++) {
+			anim->indices[i] = i;
+			Cube *p = &cube->pieces[i];
+			anim->startPos[i] = (Vector3){(float)p->x, (float)p->y, (float)p->z};
+			memcpy(anim->startColors[i], p->colors, 6*sizeof(int));
+		}
+
+		if (IsKeyPressed(KEY_I) && IsKeyDown(KEY_LEFT_SHIFT)) {
+			anim->axis = AXIS_X;
+			anim->dir = 0;
+		}
+		if (IsKeyPressed(KEY_F) && IsKeyDown(KEY_LEFT_SHIFT)) {
+			anim->axis = AXIS_X;
+			anim->dir = 0;
+		}
+		if (IsKeyPressed(KEY_H) && IsKeyDown(KEY_LEFT_SHIFT)) {
+			anim->axis = AXIS_Y;
+			anim->dir = 0;
+		}
+		if (IsKeyPressed(KEY_I) && IsKeyDown(KEY_RIGHT_SHIFT)) {
+			anim->axis = AXIS_Y;
+			anim->dir = 1;
+		}
+		if (IsKeyPressed(KEY_F) && IsKeyDown(KEY_RIGHT_SHIFT)) {
+			anim->axis = AXIS_Z;
+			anim->dir = 1;
+		}
+		if (IsKeyPressed(KEY_H) && IsKeyDown(KEY_RIGHT_SHIFT)) {
+			anim->axis = AXIS_Z;
+			anim->dir = 1;
+		}
+
+		return;
+	}
 
 	int activeTarget = -1;
 	int isClockwise = 0;
@@ -210,6 +249,61 @@ void handle_cube_inputs(RubiksCube *cube) {
 	else if (IsKeyPressed(KEY_R)) { activeTarget = FACE_BACK; isClockwise = 1; }
 	else if (IsKeyPressed(KEY_Y)) { activeTarget = FACE_BACK; isClockwise = 0; }
 	else { return; }
+
+	Axis axis;
+	int layer;
+
+	switch (activeTarget) {
+		case FACE_RIGHT:
+			axis = AXIS_X;
+			layer = 1;
+			break;
+		case FACE_LEFT:
+			axis = AXIS_X;
+			layer = -1;
+			break;
+		case FACE_UP:
+			axis = AXIS_Y;
+			layer = 1;
+			break;
+		case FACE_DOWN:
+			axis = AXIS_Y;
+			layer = -1;
+			break;
+		case FACE_FRONT:
+			axis = AXIS_Z;
+			layer = 1;
+			break;
+		case FACE_BACK:
+			axis = AXIS_Z;
+			layer = -1;
+			break;
+	}
+
+	int dir = isClockwise ? 0 : 1;
+
+	anim->active = 1;
+	anim->axis = axis;
+	anim->dir = dir;
+	anim->angle = 0.0f;
+	anim->pieceCount = 0;
+
+	for (int i = 0; i < 27; i++) {
+		Cube *p = &cube->pieces[i];
+
+		int selected = 0;
+
+		if (axis == AXIS_X && p->x == layer) selected = 1;
+		if (axis == AXIS_Y && p->y == layer) selected = 1;
+		if (axis == AXIS_Z && p->z == layer) selected = 1;
+
+		if (selected) {
+			int idx = anim->pieceCount++;
+			anim->indices[idx] = i;
+			anim->startPos[idx] = (Vector3){(float)p->x, (float)p->y, (float)p->z};
+			memcpy(anim->startColors[idx], p->colors, 6*sizeof(int));
+		}
+	}
 
 	rotate_face(cube, activeTarget, isClockwise);
 }

@@ -8,8 +8,10 @@ int main(void) {
 	RubiksCube myCube;
 	init_cube(&myCube);
 	scramble_init("cache");
-	char* currentScramble = generate_scramble(21);
-	// placeholder scramble since cube is solved on launch
+	char* currentScramble = NULL;
+
+	CubeAnim anim = {0};
+	anim.active = 0;
 
 	const int screenWidth = 800;
 	const int screenHeight = 600;
@@ -36,7 +38,15 @@ int main(void) {
 		int currentHeight = GetScreenHeight();
 		if (currentHeight <= 0) currentHeight = 1;
 
-		handle_cube_inputs(&myCube);
+		if (anim.active) {
+			anim.angle += 360.0f * GetFrameTime();
+			if (anim.angle >= 90.0f) {
+				anim.angle = 90.0f;
+				anim.active = 0;
+			}
+		}
+
+		handle_cube_inputs(&myCube, &anim);
 
 		if (IsKeyPressed(KEY_ENTER)) {
 			free(currentScramble);
@@ -47,6 +57,11 @@ int main(void) {
 			
 			apply_scramble(&myCube, currentScramble);
 			free(solutionStr);
+		} else if (IsKeyPressed(KEY_BACKSPACE)) {
+			free(currentScramble);
+			init_cube(&myCube);
+
+			currentScramble = NULL;
 		}
 
 		Vector2 currentMousePosition = GetMousePosition();
@@ -82,7 +97,7 @@ int main(void) {
 		ClearBackground((Color){238, 255, 204});
 
 		BeginMode3D(camera);
-		draw_cube(&myCube);
+		draw_cube(&myCube, &anim);
 		EndMode3D();
 
 		int font_multi = currentHeight / 600;
@@ -95,7 +110,7 @@ int main(void) {
 			BLACK
 		);
 		DrawText(
-			currentScramble,
+			currentScramble ? currentScramble : "",
 			(currentWidth - MeasureText(currentScramble, 30 * font_multi)) / 2,
 			20,
 			30 * font_multi,
