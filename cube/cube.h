@@ -48,7 +48,6 @@ typedef struct {
 
 void rotate_face(RubiksCube *cube, Face face, int clockwise);
 void init_cube(RubiksCube *cube);
-void draw_cube(RubiksCube *cube, CubeAnim *anim);
 void handle_cube_inputs(RubiksCube *cube, CubeAnim *anim);
 
 #endif

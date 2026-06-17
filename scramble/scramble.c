@@ -1,4 +1,3 @@
-#include "scramble.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -8,6 +7,9 @@
 #include "cubiecube.h"
 #include "facecube.h"
 #include "coordcube.h"
+
+#include "scramble.h"
+#include "../cube/cube.h"
 
 static int scramble_initialized = 0;
 

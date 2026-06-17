@@ -18,10 +18,13 @@ all:
 	gcc -std=c99 -O3 -D_POSIX_C_SOURCE=200809L \
 	-I./ckociemba/include \
 	main.c \
-	cube.c \
-	draw.c \
-	scramble.c \
-	anim.c \
+	cube/cube.c \
+	cube/draw.c \
+	cube/anim.c \
+	scramble/scramble.c \
+	scramble/scramble_engine.c \
+	app/app.c \
+	camera/camera.c \
 	ckociemba/coordcube.c \
 	ckociemba/cubiecube.c \
 	ckociemba/facecube.c \

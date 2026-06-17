@@ -1,13 +1,10 @@
+#include "../scramble/scramble.h"
+#include "../app/app.h"
+
 #ifndef ANIM_H
 #define ANIM_H
 
-typedef struct {
-  char moves[256][8];
-  int moveCount;
-  int current;
-  int active;
-} ScrambleAnim;
-
 void parse_scramble(const char* scramble, ScrambleAnim* scrAnim);
+void update_animation(App *app);
 
 #endif

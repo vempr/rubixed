@@ -2,6 +2,7 @@
 #include <raymath.h>
 #include <rlgl.h>
 #include "cube.h"
+#include "draw.h"
 
 // debug color (Color){0,0,0,100}
 const Color INTERNAL_COLOR = (Color){0,0,0,100};
