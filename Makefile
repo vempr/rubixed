@@ -24,6 +24,8 @@ all:
 	scramble/scramble.c \
 	scramble/scramble_engine.c \
 	app/app.c \
+	app/theme.c \
+	ui/ui.c \
 	camera/camera.c \
 	ckociemba/coordcube.c \
 	ckociemba/cubiecube.c \

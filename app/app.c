@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "app.h"
+#include "theme.h"
 #include "../app/app.h"
 #include "../cube/cube.h"
 #include "../cube/anim.h"
@@ -9,6 +10,7 @@
 #include "../scramble/scramble.h"
 #include "../scramble/scramble_engine.h"
 #include "../camera/camera.h"
+#include "../ui/ui.h"
 
 void init_app_window(int width, int height, char* title) {
 	SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_MSAA_4X_HINT);
@@ -86,29 +88,87 @@ void app_draw(App *app, OrbitCamera *c) {
 
   BeginDrawing();
 
-  ClearBackground((Color){238, 255, 204});
+  ClearBackground(COLOR_BG);
 
   BeginMode3D(c->camera);
   draw_cube(&app->cube, &app->anim);
   EndMode3D();
 
-  int font_multi = currentHeight / 600;
+  float s = ui_scale();
+
+  char* name;
+  switch(app->mode) {
+    case MODE_FREE: name = "Freestyle"; break;
+    case MODE_SELF_SOLVE: name = "Instant Solve"; break;
+    case MODE_PHYSICAL_SOLVE: name = "Physical Solve"; break;
+    case MODE_VIRTUAL_SOLVE: name = "Virtual Solve"; break;
+  }
 
   DrawText(
-    "rubixed",
+    TextFormat("rubixed: %s", name),
     10,
-    40,
-    20 * font_multi,
-    BLACK
+    10,
+    (int)(12 * s),
+    COLOR_TEXT
   );
   DrawText(
     app->currentScramble ? app->currentScramble : "",
-    (currentWidth - MeasureText(app->currentScramble, 30 * font_multi)) / 2,
-    20,
-    30 * font_multi,
-    BLACK
+    (currentWidth - MeasureText(app->currentScramble, (int)(25 * s))) / 2,
+    30,
+    (int)(25 * s),
+    COLOR_TEXT
   );
-  DrawFPS(10, 10);
+  DrawFPS(7, 35);
+
+  UIRow row = ui_row((currentWidth - 840), 80, 200, 50, 10);
+
+  if (ui_button(
+    ui_next(&row),
+    "(1) Freestyle",
+    COLOR_BG,
+    COLOR_TEXT,
+    COLOR_ACCENT,
+    COLOR_ACTIVE,
+    app->mode == MODE_FREE
+  )) {
+    app->mode = MODE_FREE;
+  }
+
+  if (ui_button(
+    ui_next(&row),
+    "(2) Instant Solve",
+    COLOR_BG,
+    COLOR_TEXT,
+    COLOR_ACCENT,
+    COLOR_ACTIVE,
+    app->mode == MODE_SELF_SOLVE
+  )) {
+    app->mode = MODE_SELF_SOLVE;
+  }
+
+  if (ui_button(
+    ui_next(&row),
+    "(3) Physical Solve",
+    COLOR_BG,
+    COLOR_TEXT,
+    COLOR_ACCENT,
+    COLOR_ACTIVE,
+    app->mode == MODE_PHYSICAL_SOLVE
+  )) {
+    app->mode = MODE_PHYSICAL_SOLVE;
+  }
+
+  if (ui_button(
+    ui_next(&row),
+    "(4) Virtual Solve",
+    COLOR_BG,
+    COLOR_TEXT,
+    COLOR_ACCENT,
+    COLOR_ACTIVE,
+    app->mode == MODE_VIRTUAL_SOLVE
+  )) {
+    app->mode = MODE_VIRTUAL_SOLVE;
+  }
 
   EndDrawing();
 }

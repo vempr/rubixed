@@ -4,13 +4,13 @@
 #include "camera.h"
 
 void init_camera(OrbitCamera *c) {
-	c->camera.position = (Vector3){ 0.0f, 5.5f, 5.5f };
+	c->camera.position = (Vector3){ 0.0f, 6.5f, 6.5f };
 	c->camera.target = (Vector3){ 0.0f, 0.0f, 0.0f };
 	c->camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };
 	c->camera.fovy = 45.0f;
 	c->camera.projection = CAMERA_PERSPECTIVE;
 
-	c->cameraRadius = sqrt(pow(5.5, 2.0) + pow(5.5, 2.0));
+	c->cameraRadius = sqrt(pow(6.5, 2.0) + pow(6.5, 2.0));
 	c->cameraAlpha = 0.0f;
 	c->cameraBeta = PI / 4;
 	c->previousMousePosition = (Vector2){0.0f, 0.0f};
