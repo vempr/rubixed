@@ -20,22 +20,11 @@ int main(void) {
 	init_camera(&appCamera);
 	init_app_cube(&app);
 
-	ScrambleEngine engine = {
-		.cube = &app.cube,
-		.anim = &app.anim,
-		.scrAnim = &app.scrAnim,
-		.pendingMove = &app.pendingMove,
-	};
-
 	SetTargetFPS(240);
 
 	while(!WindowShouldClose()) {
-		update_animation(&app);
-		handle_cube_inputs(&app.cube, &app.anim);
-
-		scramble_engine_update(&engine);
-
 		handle_app_kb_shortcuts(&app);
+		app_update(&app);
 		camera_update(&appCamera);
 		app_draw(&app, &appCamera);
 	}

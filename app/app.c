@@ -2,10 +2,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "app.h"
+#include "../app/app.h"
 #include "../cube/cube.h"
 #include "../cube/anim.h"
 #include "../cube/draw.h"
 #include "../scramble/scramble.h"
+#include "../scramble/scramble_engine.h"
 #include "../camera/camera.h"
 
 void init_app_window(int width, int height, char* title) {
@@ -15,6 +17,7 @@ void init_app_window(int width, int height, char* title) {
 }
 
 void init_app_cube(App *app) {
+  app->mode = MODE_FREE;
   app->cube = (RubiksCube){0};
 	init_cube(&app->cube);
 
@@ -26,6 +29,7 @@ void init_app_cube(App *app) {
 	app->scrAnim = (ScrambleAnim){0};
 	app->scrAnim.active = 0;
 	app->pendingMove = (PendingMove){0};
+	app->intent = (MoveIntent){0};
 }
 
 void handle_app_kb_shortcuts(App *app) {
@@ -51,8 +55,27 @@ void handle_app_kb_shortcuts(App *app) {
     free(app->currentScramble);
     init_cube(&app->cube);
     app->anim = (CubeAnim){ 0 };
+    app->intent = (MoveIntent){0};
+    app->pendingMove = (PendingMove){0};
 
     app->currentScramble = NULL;
+    app->scrAnim = (ScrambleAnim){0};
+  }
+
+  if (IsKeyPressed(KEY_ONE)) {
+    app->mode = MODE_FREE;
+  }
+
+  if (IsKeyPressed(KEY_TWO)) {
+    app->mode = MODE_SELF_SOLVE;
+  }
+
+  if (IsKeyPressed(KEY_THREE)) {
+    app->mode = MODE_PHYSICAL_SOLVE;
+  }
+
+  if (IsKeyPressed(KEY_FOUR)) {
+    app->mode = MODE_VIRTUAL_SOLVE;
   }
 }
 
@@ -88,4 +111,186 @@ void app_draw(App *app, OrbitCamera *c) {
   DrawFPS(10, 10);
 
   EndDrawing();
+}
+
+void handle_cube_inputs(App *app) {
+  if (app->mode == MODE_PHYSICAL_SOLVE || app->mode == MODE_SELF_SOLVE) return;
+	if (app->anim.active || app->intent.active || app->scrAnim.active) return;
+
+	if (IsKeyDown(KEY_LEFT_SHIFT) || IsKeyDown(KEY_RIGHT_SHIFT)) {
+		Axis axis;
+		int clockwise = IsKeyDown(KEY_LEFT_SHIFT) ? 1 : 0;
+    int haveAxis = 0;
+
+		if (IsKeyPressed(KEY_I)) {
+			axis = AXIS_X;
+			haveAxis = 1;
+		}
+		if (IsKeyPressed(KEY_F)) {
+			axis = AXIS_Y;
+			haveAxis = 1;
+		}
+		if (IsKeyPressed(KEY_H)) {
+			axis = AXIS_Z;
+			haveAxis = 1;
+		}
+
+    if (haveAxis) {
+      app->intent = (MoveIntent){
+        .active = 1,
+        .axis = axis,
+        .clockwise = clockwise,
+        .kind = MOVE_WHOLE_CUBE
+      };
+    }
+
+		return;
+	}
+
+	int activeTarget = -1, isClockwise = 0;
+
+	if (IsKeyPressed(KEY_I)) { activeTarget = FACE_RIGHT; isClockwise = 1; }
+	else if (IsKeyPressed(KEY_K)) { activeTarget = FACE_RIGHT; isClockwise = 0; }
+	else if (IsKeyPressed(KEY_E)) { activeTarget = FACE_LEFT; isClockwise = 1; }
+	else if (IsKeyPressed(KEY_D)) { activeTarget = FACE_LEFT; isClockwise = 0; }
+	else if (IsKeyPressed(KEY_F)) { activeTarget = FACE_UP; isClockwise = 1; }
+	else if (IsKeyPressed(KEY_J)) { activeTarget = FACE_UP; isClockwise = 0; }
+	else if (IsKeyPressed(KEY_S)) { activeTarget = FACE_DOWN; isClockwise = 1; }
+	else if (IsKeyPressed(KEY_W)) { activeTarget = FACE_DOWN; isClockwise = 0; }
+	else if (IsKeyPressed(KEY_H)) { activeTarget = FACE_FRONT; isClockwise = 1; }
+	else if (IsKeyPressed(KEY_G)) { activeTarget = FACE_FRONT; isClockwise = 0; }
+	else if (IsKeyPressed(KEY_R)) { activeTarget = FACE_BACK; isClockwise = 1; }
+	else if (IsKeyPressed(KEY_Y)) { activeTarget = FACE_BACK; isClockwise = 0; }
+	else { return; }
+
+	Axis axis;
+	int layer, dir;
+
+	switch (activeTarget) {
+		case FACE_RIGHT:
+      app->intent = (MoveIntent){
+        .active = 1,
+        .kind = MOVE_FACE,
+        .clockwise = isClockwise ? 1 : 0,
+        .face = FACE_RIGHT
+      };
+			break;
+		case FACE_LEFT:
+      app->intent = (MoveIntent){
+        .active = 1,
+        .kind = MOVE_FACE,
+        .clockwise = isClockwise ? 0 : 1,
+        .face = FACE_LEFT
+      };
+			break;
+		case FACE_UP:
+      app->intent = (MoveIntent){
+        .active = 1,
+        .kind = MOVE_FACE,
+        .clockwise = isClockwise ? 1 : 0,
+        .face = FACE_UP
+      };
+			break;
+		case FACE_DOWN:
+      app->intent = (MoveIntent){
+        .active = 1,
+        .kind = MOVE_FACE,
+        .clockwise = isClockwise ? 0 : 1,
+        .face = FACE_DOWN
+      };
+			break;
+		case FACE_FRONT:
+			app->intent = (MoveIntent){
+        .active = 1,
+        .kind = MOVE_FACE,
+        .clockwise = isClockwise ? 1 : 0,
+        .face = FACE_FRONT
+      };
+			break;
+		case FACE_BACK:
+			app->intent = (MoveIntent){
+        .active = 1,
+        .kind = MOVE_FACE,
+        .clockwise = isClockwise ? 0 : 1,
+        .face = FACE_BACK
+      };
+			break;
+	}
+}
+
+void start_move_from_intent(App *app) {
+  if (!app->intent.active || app->anim.active) return;
+
+  CubeAnim *anim = &app->anim;
+  RubiksCube *cube = &app->cube;
+
+  anim->active = 1;
+  anim->angle = 0.0f;
+  anim->pieceCount = 0;
+  anim->dir = app->intent.clockwise;
+
+  app->pendingMove = (PendingMove){
+    .active = 1,
+    .axis = app->intent.axis,
+    .clockwise = app->intent.clockwise,
+    .face = app->intent.face,
+    .kind = app->intent.kind
+  };
+
+  if (app->intent.kind == MOVE_FACE) {
+    Face face = app->intent.face;
+
+    anim->axis =
+      face == FACE_RIGHT || face == FACE_LEFT ? AXIS_X :
+      face == FACE_UP || face == FACE_DOWN ? AXIS_Y :
+      AXIS_Z;
+  
+    int layer = face == FACE_RIGHT || face == FACE_UP || face == FACE_FRONT ? 1 : -1;
+    
+    for (int i = 0; i < 27; i++) {
+      Cube *p = &cube->pieces[i];
+
+      int selected = 0;
+
+      if (anim->axis == AXIS_X && p->x == layer) selected = 1;
+      if (anim->axis == AXIS_Y && p->y == layer) selected = 1;
+      if (anim->axis == AXIS_Z && p->z == layer) selected = 1;
+
+      if (selected) {
+        int idx = anim->pieceCount++;
+        anim->indices[idx] = i;
+        anim->startPos[idx] = (Vector3){(float)p->x, (float)p->y, (float)p->z};
+        anim->startOrient[idx] = p->orient;
+        memcpy(anim->startColors[idx], p->colors, 6*sizeof(int));
+      }
+    }
+  } else {
+    anim->axis = app->intent.axis;
+
+    for (int i = 0; i < 27; i++) {
+      Cube *p = &cube->pieces[i];
+      int idx = anim->pieceCount++;
+
+      anim->indices[idx] = i;
+      anim->startPos[idx] = (Vector3){(float)p->x, (float)p->y, (float)p->z};
+      anim->startOrient[idx] = p->orient;
+      memcpy(anim->startColors[idx], p->colors, 6*sizeof(int));
+    }
+  }
+
+  app->intent.active = 0;
+}
+
+void app_update(App *app) {
+  update_animation(app);
+
+  if (!app->anim.active && !app->intent.active) {
+    if (app->scrAnim.active) {
+      scramble_engine_update(app);
+    } else {
+      handle_cube_inputs(app);
+    }
+  }
+  
+  start_move_from_intent(app);
 }

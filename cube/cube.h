@@ -40,14 +40,29 @@ typedef struct {
 	int startColors[27][6];
 } CubeAnim;
 
+typedef enum {
+	MOVE_FACE,
+	MOVE_WHOLE_CUBE,
+} MoveKind;
+
 typedef struct {
 	int active;
+	MoveKind kind;
 	Face face;
+	Axis axis;
+	int clockwise;
+} MoveIntent;
+
+typedef struct {
+	int active;
+	MoveKind kind;
+	Face face;
+	Axis axis;
 	int clockwise;
 } PendingMove;
 
 void rotate_face(RubiksCube *cube, Face face, int clockwise);
 void init_cube(RubiksCube *cube);
-void handle_cube_inputs(RubiksCube *cube, CubeAnim *anim);
+void rotate_cube_axis(RubiksCube *cube, Axis axis, int clockwise);
 
 #endif

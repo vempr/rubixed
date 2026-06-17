@@ -11,6 +11,6 @@ typedef struct {
   PendingMove *pendingMove;
 } ScrambleEngine;
 
-void scramble_engine_update(ScrambleEngine *engine);
+void scramble_engine_update(App *app);
 
 #endif

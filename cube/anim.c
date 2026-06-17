@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "cube.h"
+#include "../cube/cube.h"
 #include "anim.h"
 #include "../app/app.h"
 
@@ -40,16 +40,24 @@ void parse_scramble(const char* scramble, ScrambleAnim* scrAnim) {
 }
 
 void update_animation(App *app) {
-  if (app->anim.active) {
-    app->anim.angle += 720.0f * GetFrameTime();
-    if (app->anim.angle >= 90.0f) {
-      app->anim.angle = 90.0f;
-      app->anim.active = 0;
+  if (!app->anim.active) return;
 
-      if (app->pendingMove.active) {
-        rotate_face(&app->cube, app->pendingMove.face, app->pendingMove.clockwise);
-        app->pendingMove.active = 0;
-      }
-    }
+  app->anim.angle += 720.0f * GetFrameTime();
+  if (app->anim.angle < 90.0f) return;
+
+  app->anim.angle = 90.0f;
+
+  if (!app->pendingMove.active) {
+    app->anim.active = 0;
+    return;
   }
+
+  if (app->pendingMove.kind == MOVE_FACE) {
+    rotate_face(&app->cube, app->pendingMove.face, app->pendingMove.clockwise);
+  } else {
+    rotate_cube_axis(&app->cube, app->pendingMove.axis, app->pendingMove.clockwise);
+  }
+
+  app->pendingMove.active = 0;
+  app->anim.active = 0;
 }
