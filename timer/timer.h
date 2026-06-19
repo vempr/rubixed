@@ -4,10 +4,11 @@
 typedef struct {
   double startSolveTime;
   double startInspectionTime;
-  double elapsedInspectionTime;
 
   int running;
   int inspectionActive;
 } SolveTimer;
+
+double get_time_elapsed(double start);
 
 #endif

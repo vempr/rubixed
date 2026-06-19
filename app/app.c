@@ -11,6 +11,24 @@
 #include "../scramble/scramble_engine.h"
 #include "../camera/camera.h"
 #include "../ui/ui.h"
+#include "app_modes.h"
+#include "app_ui.h"
+#include "../timer/timer.h"
+
+static const KeyMap face_map[] = {
+  {KEY_I, FACE_RIGHT, 1},
+  {KEY_K, FACE_RIGHT, 0},
+  {KEY_E, FACE_LEFT, 1},
+  {KEY_D, FACE_LEFT, 0},
+  {KEY_F, FACE_UP, 0},
+  {KEY_J, FACE_UP, 1},
+  {KEY_S, FACE_DOWN, 1},
+  {KEY_W, FACE_DOWN, 0},
+  {KEY_H, FACE_FRONT, 1},
+  {KEY_G, FACE_FRONT, 0},
+  {KEY_R, FACE_BACK, 1},
+  {KEY_Y, FACE_BACK, 0}
+};
 
 void init_app_window(int width, int height, char* title) {
 	SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_MSAA_4X_HINT);
@@ -35,7 +53,7 @@ void init_app_cube(App *app) {
 	app->timer = (SolveTimer){0};
 }
 
-static void reset_session(App *app) {
+void reset_session(App *app) {
   free(app->currentScramble);
   init_cube(&app->cube);
 
@@ -54,7 +72,7 @@ static void virtual_solve_abort(App *app) {
 
   double elapsed = 0.0;
   if (app->timer.running) {
-    elapsed = GetTime() - app->timer.startSolveTime;
+    elapsed = get_time_elapsed(app->timer.startSolveTime);
   }
 
   printf(
@@ -64,25 +82,6 @@ static void virtual_solve_abort(App *app) {
   );
 
   app->timer = (SolveTimer){0};
-}
-
-static void exit_mode(App *app) {
-  if (app->mode == MODE_VIRTUAL_SOLVE && app->timer.running) {
-    double elapsed = GetTime() - app->timer.startSolveTime;
-    printf(
-      "DNF: scramble=%s time=%.3f\n",
-      app->currentScramble,
-      elapsed
-    );
-  }
-}
-
-static void set_mode(App *app, AppMode mode) {
-  if (app->mode == mode) return;
-
-  exit_mode(app);
-  reset_session(app);
-  app->mode = mode;
 }
 
 void handle_app_kb_shortcuts(App *app) {
@@ -143,22 +142,13 @@ void app_draw(App *app, OrbitCamera *c) {
   draw_cube(&app->cube, &app->anim);
   EndMode3D();
 
+  DrawFPS(7, 35);
+
   switch(app->mode) {
     case MODE_FREE: name = "Freestyle"; break;
     case MODE_SELF_SOLVE: name = "Instant Solve"; break;
     case MODE_PHYSICAL_SOLVE: name = "Physical Solve"; break;
     case MODE_VIRTUAL_SOLVE: name = "Virtual Solve"; break;
-  }
-
-  if (app->mode == MODE_VIRTUAL_SOLVE && app->timer.running) {
-    double elapsed = GetTime() - app->timer.startSolveTime;
-    DrawText(
-      TextFormat("%.2f", elapsed),
-      (currentWidth - MeasureText(TextFormat("%.2f", elapsed), (int)(35 * s))) / 2,
-      currentHeight - 100,
-      (int)(35 * s),
-      COLOR_TEXT
-    );
   }
 
   DrawText(
@@ -175,52 +165,9 @@ void app_draw(App *app, OrbitCamera *c) {
     (int)(25 * s),
     COLOR_TEXT
   );
-  DrawFPS(7, 35);
 
-  if (ui_button(
-    ui_next(&row),
-    "(1) Freestyle",
-    COLOR_BG,
-    COLOR_TEXT,
-    COLOR_ACCENT,
-    COLOR_ACTIVE,
-    app->mode == MODE_FREE
-  )) {
-    set_mode(app, MODE_FREE);
-  }
-  if (ui_button(
-    ui_next(&row),
-    "(2) Instant Solve",
-    COLOR_BG,
-    COLOR_TEXT,
-    COLOR_ACCENT,
-    COLOR_ACTIVE,
-    app->mode == MODE_SELF_SOLVE
-  )) {
-    set_mode(app, MODE_SELF_SOLVE);
-  }
-  if (ui_button(
-    ui_next(&row),
-    "(3) Physical Solve",
-    COLOR_BG,
-    COLOR_TEXT,
-    COLOR_ACCENT,
-    COLOR_ACTIVE,
-    app->mode == MODE_PHYSICAL_SOLVE
-  )) {
-    set_mode(app, MODE_PHYSICAL_SOLVE);
-  }
-  if (ui_button(
-    ui_next(&row),
-    "(4) Virtual Solve",
-    COLOR_BG,
-    COLOR_TEXT,
-    COLOR_ACCENT,
-    COLOR_ACTIVE,
-    app->mode == MODE_VIRTUAL_SOLVE
-  )) {
-    set_mode(app, MODE_VIRTUAL_SOLVE);
-  }
+  draw_elapsed_time(app);
+  draw_buttons(app, &row);
 
   EndDrawing();
 }
@@ -228,6 +175,7 @@ void app_draw(App *app, OrbitCamera *c) {
 void handle_cube_inputs(App *app) {
   if (app->mode == MODE_PHYSICAL_SOLVE || app->mode == MODE_SELF_SOLVE) return;
 	if (app->anim.active || app->intent.active || app->scrAnim.active) return;
+  if (app->mode == MODE_VIRTUAL_SOLVE && !app->currentScramble) return;
 
 	if (IsKeyDown(KEY_LEFT_SHIFT) || IsKeyDown(KEY_RIGHT_SHIFT)) {
 		Axis axis;
@@ -259,75 +207,25 @@ void handle_cube_inputs(App *app) {
 		return;
 	}
 
-	int activeTarget = -1, isClockwise = 0;
+  for (int i = 0; i < (int)(sizeof(face_map) / sizeof(face_map[0])); i++) {
+    if (IsKeyPressed(face_map[i].key)) {
+      int isClockwise = face_map[i].clockwise;
+      if (
+        face_map[i].face == FACE_LEFT ||
+        face_map[i].face == FACE_DOWN ||
+        face_map[i].face == FACE_BACK
+      ) {
+        isClockwise = isClockwise ? 0 : 1;
+      }
 
-	if (IsKeyPressed(KEY_I)) { activeTarget = FACE_RIGHT; isClockwise = 1; }
-	else if (IsKeyPressed(KEY_K)) { activeTarget = FACE_RIGHT; isClockwise = 0; }
-	else if (IsKeyPressed(KEY_E)) { activeTarget = FACE_LEFT; isClockwise = 1; }
-	else if (IsKeyPressed(KEY_D)) { activeTarget = FACE_LEFT; isClockwise = 0; }
-	else if (IsKeyPressed(KEY_F)) { activeTarget = FACE_UP; isClockwise = 0; }
-	else if (IsKeyPressed(KEY_J)) { activeTarget = FACE_UP; isClockwise = 1; }
-	else if (IsKeyPressed(KEY_S)) { activeTarget = FACE_DOWN; isClockwise = 1; }
-	else if (IsKeyPressed(KEY_W)) { activeTarget = FACE_DOWN; isClockwise = 0; }
-	else if (IsKeyPressed(KEY_H)) { activeTarget = FACE_FRONT; isClockwise = 1; }
-	else if (IsKeyPressed(KEY_G)) { activeTarget = FACE_FRONT; isClockwise = 0; }
-	else if (IsKeyPressed(KEY_R)) { activeTarget = FACE_BACK; isClockwise = 1; }
-	else if (IsKeyPressed(KEY_Y)) { activeTarget = FACE_BACK; isClockwise = 0; }
-	else { return; }
-
-	Axis axis;
-	int layer, dir;
-
-	switch (activeTarget) {
-		case FACE_RIGHT:
       app->intent = (MoveIntent){
         .active = 1,
         .kind = MOVE_FACE,
-        .clockwise = isClockwise ? 1 : 0,
-        .face = FACE_RIGHT
+        .clockwise = isClockwise,
+        .face = face_map[i].face
       };
-			break;
-		case FACE_LEFT:
-      app->intent = (MoveIntent){
-        .active = 1,
-        .kind = MOVE_FACE,
-        .clockwise = isClockwise ? 0 : 1,
-        .face = FACE_LEFT
-      };
-			break;
-		case FACE_UP:
-      app->intent = (MoveIntent){
-        .active = 1,
-        .kind = MOVE_FACE,
-        .clockwise = isClockwise ? 1 : 0,
-        .face = FACE_UP
-      };
-			break;
-		case FACE_DOWN:
-      app->intent = (MoveIntent){
-        .active = 1,
-        .kind = MOVE_FACE,
-        .clockwise = isClockwise ? 0 : 1,
-        .face = FACE_DOWN
-      };
-			break;
-		case FACE_FRONT:
-			app->intent = (MoveIntent){
-        .active = 1,
-        .kind = MOVE_FACE,
-        .clockwise = isClockwise ? 1 : 0,
-        .face = FACE_FRONT
-      };
-			break;
-		case FACE_BACK:
-			app->intent = (MoveIntent){
-        .active = 1,
-        .kind = MOVE_FACE,
-        .clockwise = isClockwise ? 0 : 1,
-        .face = FACE_BACK
-      };
-			break;
-	}
+    }
+  }
 }
 
 void start_move_from_intent(App *app) {

@@ -4,6 +4,7 @@
 #include "../cube/cube.h"
 #include "anim.h"
 #include "../app/app.h"
+#include "../timer/timer.h"
 
 // parse_scramble is in anim.c because instructions don't require scramble logic
 // like other functions in scramble.c; only parses scramble for scrAnim to use
@@ -61,9 +62,13 @@ void update_animation(App *app) {
   app->pendingMove.active = 0;
   app->anim.active = 0;
 
-  if (app->mode != MODE_VIRTUAL_SOLVE || !app->timer.running) {
+  if (
+    app->mode == MODE_VIRTUAL_SOLVE &&
+    app->timer.running &&
+    app->currentScramble
+  ) {
     if (virtual_cube_is_solved(&app->cube)) {
-      double elapsed = GetTime() - app->timer.startSolveTime;
+      double elapsed = get_time_elapsed(app->timer.startSolveTime);
 
       printf(
         "SOLVED: scramble=%s time=%.3f\n",

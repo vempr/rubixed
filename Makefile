@@ -25,6 +25,8 @@ all:
 	scramble/scramble_engine.c \
 	app/app.c \
 	app/theme.c \
+	app/app_modes.c \
+	app/app_ui.c \
 	ui/ui.c \
 	camera/camera.c \
 	timer/timer.c \
