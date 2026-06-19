@@ -67,7 +67,7 @@ void reset_session(App *app) {
 	app->timer = (SolveTimer){0};
 }
 
-static void virtual_solve_abort(App *app) {
+static void solve_abort(App *app) {
   if (app->mode != MODE_VIRTUAL_SOLVE || !app->timer.running) return;
 
   double elapsed = 0.0;
@@ -87,11 +87,12 @@ static void virtual_solve_abort(App *app) {
 void handle_app_kb_shortcuts(App *app) {
   // new scramble
   if (IsKeyPressed(KEY_ENTER)) {
-    virtual_solve_abort(app);
+    solve_abort(app);
 
     free(app->currentScramble);
     init_cube(&app->cube);
     app->anim = (CubeAnim){ 0 };
+    app->timer = (SolveTimer){ 0 };
 
     char* solutionStr = generate_scramble(21);
     app->currentScramble = invert_scramble(solutionStr);
@@ -106,7 +107,7 @@ void handle_app_kb_shortcuts(App *app) {
   
   // unscramble cube
   if (IsKeyPressed(KEY_BACKSPACE)) {
-    virtual_solve_abort(app);
+    solve_abort(app);
 
     free(app->currentScramble);
     init_cube(&app->cube);
@@ -116,6 +117,28 @@ void handle_app_kb_shortcuts(App *app) {
 
     app->currentScramble = NULL;
     app->scrAnim = (ScrambleAnim){0};
+  }
+
+  if (IsKeyPressed(KEY_Q)) {
+    SolveTimer *t = &app->timer;
+
+    if (!app->currentScramble) return;
+
+    if (t->running) {
+      printf(
+        "DNF: scramble=%s time=%.3f\n",
+        app->currentScramble,
+        get_time_elapsed(t->startSolveTime)
+      );
+    } else {
+      printf("DNF: scramble=%s\n", app->currentScramble);
+    }
+   
+    t->dnf = 1;
+    t->running = 0;
+    t->inspectionActive = 0;
+    t->armed = 0;
+    t->spaceHeld = 0;
   }
 
   if (IsKeyPressed(KEY_ONE)) set_mode(app, MODE_FREE);
@@ -166,7 +189,7 @@ void app_draw(App *app, OrbitCamera *c) {
     COLOR_TEXT
   );
 
-  draw_elapsed_time(app);
+  draw_solve_steps(app);
   draw_buttons(app, &row);
 
   EndDrawing();
@@ -230,7 +253,8 @@ void handle_cube_inputs(App *app) {
 
 void start_move_from_intent(App *app) {
   if (!app->intent.active || app->anim.active) return;
-
+  if (app->timer.dnf) return;
+  
   if (
     app->mode == MODE_VIRTUAL_SOLVE
     && !app->timer.running
@@ -302,6 +326,7 @@ void start_move_from_intent(App *app) {
 }
 
 void app_update(App *app) {
+  handle_solve_space(app);
   update_animation(app);
 
   if (!app->anim.active && !app->intent.active) {
