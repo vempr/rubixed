@@ -20,7 +20,7 @@ int main(void) {
 	init_camera(&appCamera);
 	init_app_cube(&app);
 
-	SetTargetFPS(240);
+	SetTargetFPS(60);
 
 	while(!WindowShouldClose()) {
 		handle_app_kb_shortcuts(&app);

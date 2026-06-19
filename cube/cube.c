@@ -202,3 +202,51 @@ void rotate_cube_axis(RubiksCube *cube, Axis axis, int clockwise) {
 		rotate_piece(&cube->pieces[i], axis, clockwise);
 	}
 }
+
+static Quaternion normalize(Quaternion q) {
+	q = QuaternionNormalize(q);
+
+	if (q.w < 0.0f) {
+		q.x = -q.x;
+		q.y = -q.y;
+		q.z = -q.z;
+		q.w = -q.w;
+	}
+
+	return q;
+}
+
+int virtual_cube_is_solved(RubiksCube *cube) {
+	Quaternion global = normalize(cube->pieces[0].orient);
+
+	for (int i = 1; i < 27; i++) {
+		Quaternion a = normalize(global);
+		Quaternion b = normalize(cube->pieces[i].orient);
+	
+		float dot =
+			a.x * b.x +
+			a.y * b.y +
+			a.z * b.z +
+			a.w * b.w;
+	
+		if (fabsf(fabsf(dot) - 1.0f) > 0.0001f) {
+			return 0;
+		}
+	}
+
+	for (int i = 0; i < 27; i++) {
+		Vector3 base = {
+			(float)((i % 3) - 1),
+			(float)(((i / 3) % 3) - 1),
+			(float)((i / 9) - 1)
+		};
+
+		Vector3 expected = Vector3Transform(base, QuaternionToMatrix(global));
+	
+		if (cube->pieces[i].x != (int)lroundf(expected.x)) return 0;
+		if (cube->pieces[i].y != (int)lroundf(expected.y)) return 0;
+		if (cube->pieces[i].z != (int)lroundf(expected.z)) return 0;
+	}
+
+	return 1;
+}

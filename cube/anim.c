@@ -60,4 +60,18 @@ void update_animation(App *app) {
 
   app->pendingMove.active = 0;
   app->anim.active = 0;
+
+  if (app->mode != MODE_VIRTUAL_SOLVE || !app->timer.running) {
+    if (virtual_cube_is_solved(&app->cube)) {
+      double elapsed = GetTime() - app->timer.startSolveTime;
+
+      printf(
+        "SOLVED: scramble=%s time=%.3f\n",
+        app->currentScramble,
+        elapsed
+      );
+
+      app->timer = (SolveTimer){0};
+    }
+  }
 }

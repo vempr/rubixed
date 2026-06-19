@@ -32,11 +32,64 @@ void init_app_cube(App *app) {
 	app->scrAnim.active = 0;
 	app->pendingMove = (PendingMove){0};
 	app->intent = (MoveIntent){0};
+	app->timer = (SolveTimer){0};
+}
+
+static void reset_session(App *app) {
+  free(app->currentScramble);
+  init_cube(&app->cube);
+
+  app->currentScramble = NULL;
+  app->anim = (CubeAnim){0};
+	app->anim.active = 0;
+	app->scrAnim = (ScrambleAnim){0};
+	app->scrAnim.active = 0;
+	app->pendingMove = (PendingMove){0};
+	app->intent = (MoveIntent){0};
+	app->timer = (SolveTimer){0};
+}
+
+static void virtual_solve_abort(App *app) {
+  if (app->mode != MODE_VIRTUAL_SOLVE || !app->timer.running) return;
+
+  double elapsed = 0.0;
+  if (app->timer.running) {
+    elapsed = GetTime() - app->timer.startSolveTime;
+  }
+
+  printf(
+    "DNF: scramble=%s time=%.3f\n",
+    app->currentScramble,
+    elapsed
+  );
+
+  app->timer = (SolveTimer){0};
+}
+
+static void exit_mode(App *app) {
+  if (app->mode == MODE_VIRTUAL_SOLVE && app->timer.running) {
+    double elapsed = GetTime() - app->timer.startSolveTime;
+    printf(
+      "DNF: scramble=%s time=%.3f\n",
+      app->currentScramble,
+      elapsed
+    );
+  }
+}
+
+static void set_mode(App *app, AppMode mode) {
+  if (app->mode == mode) return;
+
+  exit_mode(app);
+  reset_session(app);
+  app->mode = mode;
 }
 
 void handle_app_kb_shortcuts(App *app) {
   // new scramble
   if (IsKeyPressed(KEY_ENTER)) {
+    virtual_solve_abort(app);
+
     free(app->currentScramble);
     init_cube(&app->cube);
     app->anim = (CubeAnim){ 0 };
@@ -44,8 +97,8 @@ void handle_app_kb_shortcuts(App *app) {
     char* solutionStr = generate_scramble(21);
     app->currentScramble = invert_scramble(solutionStr);
 
-    printf("solution: [%s]\n", solutionStr);
-    printf("inverse: [%s]\n", app->currentScramble);
+    // printf("solution: [%s]\n", solutionStr);
+    // printf("inverse: [%s]\n", app->currentScramble);
     
     parse_scramble(app->currentScramble, &app->scrAnim);
 
@@ -54,6 +107,8 @@ void handle_app_kb_shortcuts(App *app) {
   
   // unscramble cube
   if (IsKeyPressed(KEY_BACKSPACE)) {
+    virtual_solve_abort(app);
+
     free(app->currentScramble);
     init_cube(&app->cube);
     app->anim = (CubeAnim){ 0 };
@@ -64,27 +119,21 @@ void handle_app_kb_shortcuts(App *app) {
     app->scrAnim = (ScrambleAnim){0};
   }
 
-  if (IsKeyPressed(KEY_ONE)) {
-    app->mode = MODE_FREE;
-  }
-
-  if (IsKeyPressed(KEY_TWO)) {
-    app->mode = MODE_SELF_SOLVE;
-  }
-
-  if (IsKeyPressed(KEY_THREE)) {
-    app->mode = MODE_PHYSICAL_SOLVE;
-  }
-
-  if (IsKeyPressed(KEY_FOUR)) {
-    app->mode = MODE_VIRTUAL_SOLVE;
-  }
+  if (IsKeyPressed(KEY_ONE)) set_mode(app, MODE_FREE);
+  if (IsKeyPressed(KEY_TWO)) set_mode(app, MODE_SELF_SOLVE);
+  if (IsKeyPressed(KEY_THREE)) set_mode(app, MODE_PHYSICAL_SOLVE);
+  if (IsKeyPressed(KEY_FOUR)) set_mode(app, MODE_VIRTUAL_SOLVE);
 }
 
 void app_draw(App *app, OrbitCamera *c) {
   int currentWidth = GetScreenWidth();
   int currentHeight = GetScreenHeight();
+
   if (currentHeight <= 0) currentHeight = 1;
+
+  float s = ui_scale();
+  char* name;
+  UIRow row = ui_row((currentWidth - 840), 80, 200, 50, 10);
 
   BeginDrawing();
 
@@ -94,14 +143,22 @@ void app_draw(App *app, OrbitCamera *c) {
   draw_cube(&app->cube, &app->anim);
   EndMode3D();
 
-  float s = ui_scale();
-
-  char* name;
   switch(app->mode) {
     case MODE_FREE: name = "Freestyle"; break;
     case MODE_SELF_SOLVE: name = "Instant Solve"; break;
     case MODE_PHYSICAL_SOLVE: name = "Physical Solve"; break;
     case MODE_VIRTUAL_SOLVE: name = "Virtual Solve"; break;
+  }
+
+  if (app->mode == MODE_VIRTUAL_SOLVE && app->timer.running) {
+    double elapsed = GetTime() - app->timer.startSolveTime;
+    DrawText(
+      TextFormat("%.2f", elapsed),
+      (currentWidth - MeasureText(TextFormat("%.2f", elapsed), (int)(35 * s))) / 2,
+      currentHeight - 100,
+      (int)(35 * s),
+      COLOR_TEXT
+    );
   }
 
   DrawText(
@@ -120,8 +177,6 @@ void app_draw(App *app, OrbitCamera *c) {
   );
   DrawFPS(7, 35);
 
-  UIRow row = ui_row((currentWidth - 840), 80, 200, 50, 10);
-
   if (ui_button(
     ui_next(&row),
     "(1) Freestyle",
@@ -131,9 +186,8 @@ void app_draw(App *app, OrbitCamera *c) {
     COLOR_ACTIVE,
     app->mode == MODE_FREE
   )) {
-    app->mode = MODE_FREE;
+    set_mode(app, MODE_FREE);
   }
-
   if (ui_button(
     ui_next(&row),
     "(2) Instant Solve",
@@ -143,9 +197,8 @@ void app_draw(App *app, OrbitCamera *c) {
     COLOR_ACTIVE,
     app->mode == MODE_SELF_SOLVE
   )) {
-    app->mode = MODE_SELF_SOLVE;
+    set_mode(app, MODE_SELF_SOLVE);
   }
-
   if (ui_button(
     ui_next(&row),
     "(3) Physical Solve",
@@ -155,9 +208,8 @@ void app_draw(App *app, OrbitCamera *c) {
     COLOR_ACTIVE,
     app->mode == MODE_PHYSICAL_SOLVE
   )) {
-    app->mode = MODE_PHYSICAL_SOLVE;
+    set_mode(app, MODE_PHYSICAL_SOLVE);
   }
-
   if (ui_button(
     ui_next(&row),
     "(4) Virtual Solve",
@@ -167,7 +219,7 @@ void app_draw(App *app, OrbitCamera *c) {
     COLOR_ACTIVE,
     app->mode == MODE_VIRTUAL_SOLVE
   )) {
-    app->mode = MODE_VIRTUAL_SOLVE;
+    set_mode(app, MODE_VIRTUAL_SOLVE);
   }
 
   EndDrawing();
@@ -213,8 +265,8 @@ void handle_cube_inputs(App *app) {
 	else if (IsKeyPressed(KEY_K)) { activeTarget = FACE_RIGHT; isClockwise = 0; }
 	else if (IsKeyPressed(KEY_E)) { activeTarget = FACE_LEFT; isClockwise = 1; }
 	else if (IsKeyPressed(KEY_D)) { activeTarget = FACE_LEFT; isClockwise = 0; }
-	else if (IsKeyPressed(KEY_F)) { activeTarget = FACE_UP; isClockwise = 1; }
-	else if (IsKeyPressed(KEY_J)) { activeTarget = FACE_UP; isClockwise = 0; }
+	else if (IsKeyPressed(KEY_F)) { activeTarget = FACE_UP; isClockwise = 0; }
+	else if (IsKeyPressed(KEY_J)) { activeTarget = FACE_UP; isClockwise = 1; }
 	else if (IsKeyPressed(KEY_S)) { activeTarget = FACE_DOWN; isClockwise = 1; }
 	else if (IsKeyPressed(KEY_W)) { activeTarget = FACE_DOWN; isClockwise = 0; }
 	else if (IsKeyPressed(KEY_H)) { activeTarget = FACE_FRONT; isClockwise = 1; }
@@ -280,6 +332,16 @@ void handle_cube_inputs(App *app) {
 
 void start_move_from_intent(App *app) {
   if (!app->intent.active || app->anim.active) return;
+
+  if (
+    app->mode == MODE_VIRTUAL_SOLVE
+    && !app->timer.running
+    && !app->scrAnim.active
+    && app->currentScramble
+  ) {
+    app->timer.running = 1;
+    app->timer.startSolveTime = GetTime();
+  }
 
   CubeAnim *anim = &app->anim;
   RubiksCube *cube = &app->cube;

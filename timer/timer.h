@@ -3,7 +3,6 @@
 
 typedef struct {
   double startSolveTime;
-  double elapsedSolveTime;
   double startInspectionTime;
   double elapsedInspectionTime;
 

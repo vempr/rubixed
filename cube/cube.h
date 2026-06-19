@@ -64,5 +64,6 @@ typedef struct {
 void rotate_face(RubiksCube *cube, Face face, int clockwise);
 void init_cube(RubiksCube *cube);
 void rotate_cube_axis(RubiksCube *cube, Axis axis, int clockwise);
+int virtual_cube_is_solved(RubiksCube *cube);
 
 #endif

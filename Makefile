@@ -27,6 +27,7 @@ all:
 	app/theme.c \
 	ui/ui.c \
 	camera/camera.c \
+	timer/timer.c \
 	ckociemba/coordcube.c \
 	ckociemba/cubiecube.c \
 	ckociemba/facecube.c \
