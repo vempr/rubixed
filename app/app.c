@@ -18,16 +18,16 @@
 static const KeyMap face_map[] = {
   {KEY_I, FACE_RIGHT, 1},
   {KEY_K, FACE_RIGHT, 0},
-  {KEY_E, FACE_LEFT, 1},
-  {KEY_D, FACE_LEFT, 0},
+  {KEY_E, FACE_LEFT, 0},
+  {KEY_D, FACE_LEFT, 1},
   {KEY_F, FACE_UP, 0},
   {KEY_J, FACE_UP, 1},
-  {KEY_S, FACE_DOWN, 1},
-  {KEY_W, FACE_DOWN, 0},
+  {KEY_S, FACE_DOWN, 0},
+  {KEY_W, FACE_DOWN, 1},
   {KEY_H, FACE_FRONT, 1},
   {KEY_G, FACE_FRONT, 0},
-  {KEY_R, FACE_BACK, 1},
-  {KEY_Y, FACE_BACK, 0}
+  {KEY_R, FACE_BACK, 0},
+  {KEY_Y, FACE_BACK, 1}
 };
 
 void init_app_window(int width, int height, char* title) {
@@ -271,7 +271,15 @@ void start_move_from_intent(App *app) {
   anim->active = 1;
   anim->angle = 0.0f;
   anim->pieceCount = 0;
-  anim->dir = app->intent.clockwise;
+  if (app->intent.kind == MOVE_FACE) {
+    Face face = app->intent.face;
+    anim->dir = face == FACE_LEFT || face == FACE_DOWN || face == FACE_BACK
+      ? !app->intent.clockwise
+      : app->intent.clockwise;
+  
+  } else {
+    anim->dir = app->intent.clockwise;
+  }
 
   app->pendingMove = (PendingMove){
     .active = 1,
@@ -290,7 +298,7 @@ void start_move_from_intent(App *app) {
       AXIS_Z;
   
     int layer = face == FACE_RIGHT || face == FACE_UP || face == FACE_FRONT ? 1 : -1;
-    
+
     for (int i = 0; i < 27; i++) {
       Cube *p = &cube->pieces[i];
 
