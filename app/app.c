@@ -59,6 +59,14 @@ void reset_session(App *app) {
   free(app->currentScramble);
   init_cube(&app->cube);
 
+  // debug
+  // for (int i = 0; i < 27; i++) {
+  //   Cube *p = &app->cube.pieces[i];
+  //   printf("(%d,%d,%d):", p->x, p->y, p->z);
+  //   for (int j = 0; j < 6; j++) printf("%d ", p->colors[j]);
+  //   printf("\n");
+  // }
+
   app->currentScramble = NULL;
   app->anim = (CubeAnim){0};
 	app->anim.active = 0;
@@ -348,4 +356,19 @@ void app_update(App *app) {
   }
   
   start_move_from_intent(app);
+
+  if (app->mode == MODE_SELF_SOLVE && !app->scrAnim.active) {
+    // debug
+    // for (int i = 0; i < 27; i++) {
+    //   Cube *p = &app->cube.pieces[i];
+    //   printf("(%d,%d,%d):", p->x, p->y, p->z);
+    //   for (int j = 0; j < 6; j++) printf("%d ", p->colors[j]);
+    //   printf("\n");
+    // }
+    
+    static int last_solved = 0;
+    int solved = virtual_cube_is_solved(&app->cube);
+    if (solved && !last_solved) printf( "SOLVED virtual cube\n");
+    last_solved = solved;
+  }
 }

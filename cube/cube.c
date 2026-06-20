@@ -217,38 +217,74 @@ static Quaternion normalize(Quaternion q) {
 }
 
 int virtual_cube_is_solved(RubiksCube *cube) {
-	Quaternion global = normalize(cube->pieces[0].orient);
+	printf("VCIS\n");
 
-	for (int i = 1; i < 27; i++) {
-		Quaternion a = normalize(global);
-		Quaternion b = normalize(cube->pieces[i].orient);
+	// deprecated: floating point drift in quaternion orientations
+	// Quaternion global = normalize(cube->pieces[0].orient);
+
+	// for (int i = 1; i < 27; i++) {
+	// 	Quaternion a = normalize(global);
+	// 	Quaternion b = normalize(cube->pieces[i].orient);
 	
-		float dot =
-			a.x * b.x +
-			a.y * b.y +
-			a.z * b.z +
-			a.w * b.w;
+	// 	float dot =
+	// 		a.x * b.x +
+	// 		a.y * b.y +
+	// 		a.z * b.z +
+	// 		a.w * b.w;
 	
-		if (fabsf(fabsf(dot) - 1.0f) > 0.0001f) {
-			return 0;
+	// 	if (fabsf(fabsf(dot) - 1.0f) > 0.0001f) {
+	// 		return 0;
+	// 	}
+	// }
+
+	// for (int i = 0; i < 27; i++) {
+	// 	Vector3 base = {
+	// 		(float)((i % 3) - 1),
+	// 		(float)(((i / 3) % 3) - 1),
+	// 		(float)((i / 9) - 1)
+	// 	};
+
+	// 	Vector3 expected = Vector3Transform(base, QuaternionToMatrix(global));
+	
+	// 	if (cube->pieces[i].x != (int)lroundf(expected.x)) return 0;
+	// 	if (cube->pieces[i].y != (int)lroundf(expected.y)) return 0;
+	// 	if (cube->pieces[i].z != (int)lroundf(expected.z)) return 0;
+	// }
+
+	// printf("solved!\n");
+
+	// return 1;
+
+	// const int faces[6][2] = {
+	// 	{1, FACE_RIGHT},
+	// 	{-1, FACE_LEFT},
+	// 	{1, FACE_UP},
+	// 	{-1, FACE_DOWN},
+	// 	{1, FACE_FRONT},
+	// 	{-1, FACE_BACK}
+	// };
+
+	for (int f = 0; f < 6; f++) {
+		int expected = -1;
+		// checks if face is solid colour
+		for (int i = 0; i < 27; i++) {
+			Cube *p = &cube->pieces[i];
+			int sticker = -1;
+
+			if (f == FACE_RIGHT && p->x == 1) sticker = p->colors[FACE_RIGHT];
+			if (f == FACE_LEFT && p->x == -1) sticker = p->colors[FACE_LEFT];
+			if (f == FACE_UP && p->y == 1) sticker = p->colors[FACE_UP];
+			if (f == FACE_DOWN && p->y == -1) sticker = p->colors[FACE_DOWN];
+			if (f == FACE_FRONT && p->z == 1) sticker = p->colors[FACE_FRONT];
+			if (f == FACE_BACK && p->z == -1) sticker = p->colors[FACE_BACK];
+		
+			if (sticker != -1) {
+				if (expected == -1) expected = sticker;
+				else if (sticker != expected) return 0;
+			}
 		}
 	}
 
-	for (int i = 0; i < 27; i++) {
-		Vector3 base = {
-			(float)((i % 3) - 1),
-			(float)(((i / 3) % 3) - 1),
-			(float)((i / 9) - 1)
-		};
-
-		Vector3 expected = Vector3Transform(base, QuaternionToMatrix(global));
-	
-		if (cube->pieces[i].x != (int)lroundf(expected.x)) return 0;
-		if (cube->pieces[i].y != (int)lroundf(expected.y)) return 0;
-		if (cube->pieces[i].z != (int)lroundf(expected.z)) return 0;
-	}
-
-	printf("solved!\n");
-
+	printf("Solved!\n");
 	return 1;
 }
