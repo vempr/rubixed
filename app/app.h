@@ -1,6 +1,7 @@
 #include "../cube/cube.h"
 #include "../camera/camera.h"
 #include "../timer/timer.h"
+#include "cubiecube.h"
 
 #ifndef APP_H
 #define APP_H
@@ -21,7 +22,11 @@ typedef struct {
 
 typedef struct {
   AppMode mode;
+
   RubiksCube cube;
+  cubiecube_t *solverCube;
+  int selfSolveRequested;
+
   char* currentScramble;
 
   CubeAnim anim;

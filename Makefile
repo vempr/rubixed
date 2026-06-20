@@ -30,6 +30,7 @@ all:
 	ui/ui.c \
 	camera/camera.c \
 	timer/timer.c \
+	solver/solver.c \
 	ckociemba/coordcube.c \
 	ckociemba/cubiecube.c \
 	ckociemba/facecube.c \

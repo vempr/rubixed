@@ -248,5 +248,7 @@ int virtual_cube_is_solved(RubiksCube *cube) {
 		if (cube->pieces[i].z != (int)lroundf(expected.z)) return 0;
 	}
 
+	printf("solved!\n");
+
 	return 1;
 }

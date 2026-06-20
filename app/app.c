@@ -40,6 +40,8 @@ void init_app_cube(App *app) {
   app->mode = MODE_FREE;
   app->cube = (RubiksCube){0};
 	init_cube(&app->cube);
+	app->solverCube = get_cubiecube();
+  app->selfSolveRequested = 0;
 
 	scramble_init("cache");
 	app->currentScramble = NULL;
@@ -196,7 +198,7 @@ void app_draw(App *app, OrbitCamera *c) {
 }
 
 void handle_cube_inputs(App *app) {
-  if (app->mode == MODE_PHYSICAL_SOLVE || app->mode == MODE_SELF_SOLVE) return;
+  if (app->mode == MODE_PHYSICAL_SOLVE) return;
 	if (app->anim.active || app->intent.active || app->scrAnim.active) return;
   if (app->mode == MODE_VIRTUAL_SOLVE && !app->currentScramble) return;
 

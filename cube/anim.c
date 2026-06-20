@@ -5,6 +5,7 @@
 #include "anim.h"
 #include "../app/app.h"
 #include "../timer/timer.h"
+#include "../solver/solver.h"
 
 // parse_scramble is in anim.c because instructions don't require scramble logic
 // like other functions in scramble.c; only parses scramble for scrAnim to use
@@ -55,6 +56,7 @@ void update_animation(App *app) {
 
   if (app->pendingMove.kind == MOVE_FACE) {
     rotate_face(&app->cube, app->pendingMove.face, app->pendingMove.clockwise);
+    solver_apply_move(app->solverCube, app->pendingMove.face, app->pendingMove.clockwise);
   } else {
     rotate_cube_axis(&app->cube, app->pendingMove.axis, app->pendingMove.clockwise);
   }

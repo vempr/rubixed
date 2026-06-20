@@ -2,7 +2,10 @@
 #include <stdlib.h>
 #include "app.h"
 #include "../timer/timer.h"
+#include "../cube/anim.h"
 #include "app_modes.h"
+#include "facecube.h"
+#include "../ckociemba/include/search.h"
 
 static void exit_mode(App *app) {
   if (app->mode == MODE_VIRTUAL_SOLVE && app->timer.running) {
@@ -24,6 +27,13 @@ void set_mode(App *app, AppMode mode) {
 }
 
 void handle_solve_space(App *app) {
+  if (app->mode == MODE_SELF_SOLVE) {
+    if (IsKeyPressed(KEY_SPACE) || IsKeyDown(KEY_SPACE)) {
+      trigger_self_solve(app);
+    }
+    return;
+  }
+
   if (
     (app->mode != MODE_PHYSICAL_SOLVE &&
     app->mode != MODE_VIRTUAL_SOLVE) ||
@@ -118,4 +128,71 @@ SolveState get_solve_state(App *app) {
   if (t->spaceHeld) return STATE_HOLD;
   if (t->inspectionActive) return STATE_INSPECT;
   return STATE_IDLE;
+}
+
+void trigger_self_solve(App *app) {
+  if (
+    app->mode != MODE_SELF_SOLVE ||
+    app->scrAnim.active ||
+    app->selfSolveRequested
+  ) return;
+
+  app->selfSolveRequested = 1;
+
+  facecube_t *fc = toFaceCube(app->solverCube);
+  char state[55];
+  to_String(fc, state);
+
+  char *sol = NULL;
+  char *inverted = NULL;
+
+  if (app->currentScramble) {
+    for (int max_moves = 22; max_moves <=30; max_moves++) {
+      sol = solution(
+        state,
+        max_moves,
+        10000,
+        0,
+        "cache"
+      );
+
+      if (!sol) continue;
+
+      inverted = invert_scramble(sol);
+      if (strcmp(inverted, app->currentScramble) != 0) break;
+    
+      free(sol);
+      sol = NULL;
+      free(inverted);
+      inverted = NULL;
+    }
+  }
+
+  if (inverted) free(inverted);
+  free(fc);
+
+  if (!sol) {
+    fc = toFaceCube(app->solverCube);
+    to_String(fc, state);
+    sol = solution(
+      state,
+      21,
+      10000,
+      0,
+      "cache"
+    );
+    free(fc);
+
+    if (!sol) {
+      app->selfSolveRequested = 0;
+      return;
+    }
+  }
+
+  printf("%s\n", sol);
+
+  parse_scramble(sol, &app->scrAnim);
+  free(sol);
+
+  app->selfSolveRequested = 0;
 }

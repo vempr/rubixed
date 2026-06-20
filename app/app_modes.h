@@ -16,5 +16,6 @@ typedef enum {
 void set_mode(App *app, AppMode mode);
 void handle_solve_space(App *app);
 SolveState get_solve_state(App *app);
+void trigger_self_solve(App *app);
 
 #endif
