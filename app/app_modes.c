@@ -7,6 +7,18 @@
 #include "facecube.h"
 #include "../ckociemba/include/search.h"
 
+SolveState get_solve_state(App *app) {
+  SolveTimer *t = &app->timer;
+
+  if (!app->currentScramble) return STATE_NO_SCRAMBLE;
+  if (t->dnf) return STATE_DNF;
+  if (t->running) return STATE_RUNNING;
+  if (t->armed) return STATE_ARMED;
+  if (t->spaceHeld) return STATE_HOLD;
+  if (t->inspectionActive) return STATE_INSPECT;
+  return STATE_IDLE;
+}
+
 static void exit_mode(App *app) {
   if (app->mode == MODE_VIRTUAL_SOLVE && app->timer.running) {
     double elapsed = get_time_elapsed(app->timer.startSolveTime);
@@ -116,18 +128,6 @@ void handle_solve_space(App *app) {
 
     t->spaceHeld = 0;
   }
-}
-
-SolveState get_solve_state(App *app) {
-  SolveTimer *t = &app->timer;
-
-  if (!app->currentScramble) return STATE_NO_SCRAMBLE;
-  if (t->dnf) return STATE_DNF;
-  if (t->running) return STATE_RUNNING;
-  if (t->armed) return STATE_ARMED;
-  if (t->spaceHeld) return STATE_HOLD;
-  if (t->inspectionActive) return STATE_INSPECT;
-  return STATE_IDLE;
 }
 
 void trigger_self_solve(App *app) {

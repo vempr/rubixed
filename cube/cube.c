@@ -217,7 +217,7 @@ static Quaternion normalize(Quaternion q) {
 }
 
 int virtual_cube_is_solved(RubiksCube *cube) {
-	printf("VCIS\n");
+	// printf("VCIS\n");
 
 	// deprecated: floating point drift in quaternion orientations
 	// Quaternion global = normalize(cube->pieces[0].orient);
@@ -285,6 +285,6 @@ int virtual_cube_is_solved(RubiksCube *cube) {
 		}
 	}
 
-	printf("Solved!\n");
+	// printf("Solved!\n");
 	return 1;
 }

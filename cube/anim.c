@@ -4,6 +4,7 @@
 #include "../cube/cube.h"
 #include "anim.h"
 #include "../app/app.h"
+#include "../app/app_modes.h"
 #include "../timer/timer.h"
 #include "../solver/solver.h"
 
@@ -79,6 +80,36 @@ void update_animation(App *app) {
       );
 
       app->timer = (SolveTimer){0};
+    }
+  }
+}
+
+void update_sticker_color(App *app) {
+  if (app->mode == MODE_FREE || app->mode == MODE_SELF_SOLVE) return;
+
+  if (app->scrAnim.active) {
+    float progress = (float)app->scrAnim.current / (float)app->scrAnim.moveCount;
+    if (progress < 0.0f) progress = 0.0f;
+    if (progress > 1.0f) progress = 1.0f;
+
+    // smoothstep
+    app->stickerFade = progress * progress * (3.0f - 2.0f * progress);
+  } else {
+    SolveState state = get_solve_state(app);
+
+    if (state == STATE_NO_SCRAMBLE) {
+      app->stickerFade = 0.0f;
+      return;
+    }
+
+    if (state == STATE_IDLE) {
+      app->stickerFade = 1.0f;
+      return;
+    }
+
+    if (state == STATE_INSPECT || state == STATE_RUNNING || state == STATE_HOLD) {
+      app->stickerFade = 0.0f;
+      return;
     }
   }
 }

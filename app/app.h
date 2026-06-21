@@ -35,6 +35,8 @@ typedef struct {
   MoveIntent intent;
 
   SolveTimer timer;
+
+  float stickerFade;
 } App;
 
 typedef struct {

@@ -53,6 +53,7 @@ void init_app_cube(App *app) {
 	app->pendingMove = (PendingMove){0};
 	app->intent = (MoveIntent){0};
 	app->timer = (SolveTimer){0};
+  app->stickerFade = 0.0f;
 }
 
 void reset_session(App *app) {
@@ -75,6 +76,7 @@ void reset_session(App *app) {
 	app->pendingMove = (PendingMove){0};
 	app->intent = (MoveIntent){0};
 	app->timer = (SolveTimer){0};
+  app->stickerFade = 0.0f;
 }
 
 static void solve_abort(App *app) {
@@ -169,10 +171,10 @@ void app_draw(App *app, OrbitCamera *c) {
 
   BeginDrawing();
 
-  ClearBackground(COLOR_BG);
 
+  ClearBackground(COLOR_BG);
   BeginMode3D(c->camera);
-  draw_cube(&app->cube, &app->anim);
+  draw_cube(&app->cube, &app->anim, app->stickerFade);
   EndMode3D();
 
   DrawFPS(7, 35);
@@ -209,6 +211,7 @@ void handle_cube_inputs(App *app) {
   if (app->mode == MODE_PHYSICAL_SOLVE) return;
 	if (app->anim.active || app->intent.active || app->scrAnim.active) return;
   if (app->mode == MODE_VIRTUAL_SOLVE && !app->currentScramble) return;
+  if (app->mode == MODE_VIRTUAL_SOLVE && get_solve_state(app) != STATE_INSPECT && get_solve_state(app) != STATE_RUNNING) return;
 
 	if (IsKeyDown(KEY_LEFT_SHIFT) || IsKeyDown(KEY_RIGHT_SHIFT)) {
 		Axis axis;
@@ -240,6 +243,8 @@ void handle_cube_inputs(App *app) {
 		return;
 	}
 
+  if (app->mode == MODE_VIRTUAL_SOLVE && get_solve_state(app) != STATE_RUNNING) return;
+
   for (int i = 0; i < (int)(sizeof(face_map) / sizeof(face_map[0])); i++) {
     if (IsKeyPressed(face_map[i].key)) {
       int isClockwise = face_map[i].clockwise;
@@ -267,12 +272,21 @@ void start_move_from_intent(App *app) {
   
   if (
     app->mode == MODE_VIRTUAL_SOLVE
+    && app->intent.kind == MOVE_FACE
     && !app->timer.running
     && !app->scrAnim.active
     && app->currentScramble
+    && app->timer.inspectionActive
+    && !app->timer.dnf
   ) {
     app->timer.running = 1;
     app->timer.startSolveTime = GetTime();
+
+    app->timer.inspectionActive = 0;
+    app->timer.armed = 0;
+    app->timer.spaceHeld = 0;
+
+    printf("Solve started\n");
   }
 
   CubeAnim *anim = &app->anim;
@@ -346,6 +360,7 @@ void start_move_from_intent(App *app) {
 void app_update(App *app) {
   handle_solve_space(app);
   update_animation(app);
+  update_sticker_color(app);
 
   if (!app->anim.active && !app->intent.active) {
     if (app->scrAnim.active) {
