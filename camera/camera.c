@@ -41,7 +41,7 @@ void camera_update(OrbitCamera *c) {
   float wheelMove = GetMouseWheelMove();
   if (wheelMove != 0.0f) {
     c->cameraRadius -= wheelMove * 0.4f;
-    if (c->cameraRadius < 4.0f) c->cameraRadius = 4.0f;
-    if (c->cameraRadius > 16.0f) c->cameraRadius = 16.0f;
+    if (c->cameraRadius < 8.0f) c->cameraRadius = 8.0f;
+    if (c->cameraRadius > 14.0f) c->cameraRadius = 14.0f;
   }
 }

@@ -31,6 +31,8 @@ all:
 	camera/camera.c \
 	timer/timer.c \
 	solver/solver.c \
+	storage/log.c \
+	utils/utils.c \
 	ckociemba/coordcube.c \
 	ckociemba/cubiecube.c \
 	ckociemba/facecube.c \

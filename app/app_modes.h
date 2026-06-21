@@ -1,7 +1,7 @@
 #include "app.h"
 
-#ifndef APP_MODES
-#define APP_MODES
+#ifndef APP_MODES_H
+#define APP_MODES_H
 
 typedef enum {
   STATE_NO_SCRAMBLE,

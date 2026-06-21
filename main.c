@@ -15,7 +15,7 @@ int main(void) {
 	App app = {0};
 	OrbitCamera appCamera;
 
-	char* title = "rubixed - 3d rubik's cube visualizer & solver";
+	char* title = "rubixed - 3d rubik's cube timer & solver";
 	init_app_window(1400, 1000, title);
 	init_camera(&appCamera);
 	init_app_cube(&app);

@@ -6,6 +6,7 @@
 #include "app_modes.h"
 #include "facecube.h"
 #include "../ckociemba/include/search.h"
+#include "../storage/log.h"
 
 SolveState get_solve_state(App *app) {
   SolveTimer *t = &app->timer;
@@ -20,7 +21,7 @@ SolveState get_solve_state(App *app) {
 }
 
 static void exit_mode(App *app) {
-  if (app->mode == MODE_VIRTUAL_SOLVE && app->timer.running) {
+  if ((app->mode == MODE_VIRTUAL_SOLVE || app->mode == MODE_PHYSICAL_SOLVE) && app->timer.running) {
     double elapsed = get_time_elapsed(app->timer.startSolveTime);
     printf(
       "DNF: scramble=%s time=%.3f\n",
@@ -58,6 +59,8 @@ void handle_solve_space(App *app) {
   if (t->inspectionActive && !t->dnf) {
     if (get_time_elapsed(t->startInspectionTime) > 15.0) {
       printf("DNF (inspection time exceeded)\n");
+
+      log_solve(app->currentScramble, 0.0, 1, (app->mode == MODE_PHYSICAL_SOLVE) ? "physical" : "virtual");
       
       t->dnf = 1;
       t->running = 0;
@@ -90,6 +93,8 @@ void handle_solve_space(App *app) {
         app->currentScramble,
         elapsed
       );
+      log_solve(app->currentScramble, elapsed, 0, (app->mode == MODE_PHYSICAL_SOLVE) ? "physical" : "virtual");
+
       free(app->currentScramble);
       app->currentScramble = NULL;
       

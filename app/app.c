@@ -14,6 +14,7 @@
 #include "app_modes.h"
 #include "app_ui.h"
 #include "../timer/timer.h"
+#include "../storage/log.h"
 
 static const KeyMap face_map[] = {
   {KEY_I, FACE_RIGHT, 1},
@@ -92,6 +93,9 @@ static void solve_abort(App *app) {
     app->currentScramble,
     elapsed
   );
+  
+  // behaviour: dnf should not be logged if solve hasn't started
+  if (elapsed > 0.0) log_solve(app->currentScramble, elapsed, 1, (app->mode == MODE_PHYSICAL_SOLVE) ? "physical" : "virtual");
 
   app->timer = (SolveTimer){0};
 }
@@ -133,18 +137,22 @@ void handle_app_kb_shortcuts(App *app) {
 
   if (IsKeyPressed(KEY_Q)) {
     SolveTimer *t = &app->timer;
-
     if (!app->currentScramble) return;
 
+    double elapsed = 0.0;
+
     if (t->running) {
+      elapsed = get_time_elapsed(t->startSolveTime);
       printf(
         "DNF: scramble=%s time=%.3f\n",
         app->currentScramble,
-        get_time_elapsed(t->startSolveTime)
+        elapsed
       );
     } else {
       printf("DNF: scramble=%s\n", app->currentScramble);
     }
+
+    if (elapsed > 0.0) log_solve(app->currentScramble, elapsed, 1, (app->mode == MODE_PHYSICAL_SOLVE) ? "physical" : "virtual");
    
     t->dnf = 1;
     t->running = 0;
