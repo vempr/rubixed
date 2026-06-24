@@ -24,7 +24,7 @@ static Color LerpColor(Color a, Color b, float t) {
   };
 }
 
-static Color GetRaylibColor(int ci, float fade) {
+Color GetRaylibColor(int ci, float fade) {
   Color base;
 
   switch(ci) {

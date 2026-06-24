@@ -61,12 +61,14 @@ void handle_solve_space(App *app) {
       printf("DNF (inspection time exceeded)\n");
 
       log_solve(app->currentScramble, 0.0, 1, (app->mode == MODE_PHYSICAL_SOLVE) ? "physical" : "virtual");
-      
+
       t->dnf = 1;
       t->running = 0;
       t->inspectionActive = 0;
       t->armed = 0;
       t->spaceHeld = 0;
+
+      if (app->mode == MODE_PHYSICAL_SOLVE) init_cube(&app->cube);
     }
   }
 

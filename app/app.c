@@ -3,6 +3,9 @@
 #include <stdio.h>
 #include "app.h"
 #include "theme.h"
+#include "app_modes.h"
+#include "app_ui.h"
+#include "utils.h"
 #include "../app/app.h"
 #include "../cube/cube.h"
 #include "../cube/anim.h"
@@ -11,8 +14,6 @@
 #include "../scramble/scramble_engine.h"
 #include "../camera/camera.h"
 #include "../ui/ui.h"
-#include "app_modes.h"
-#include "app_ui.h"
 #include "../timer/timer.h"
 #include "../storage/log.h"
 
@@ -179,8 +180,9 @@ void app_draw(App *app, OrbitCamera *c) {
 
   BeginDrawing();
 
-
   ClearBackground(COLOR_BG);
+  draw_cube_projection(app);
+
   BeginMode3D(c->camera);
   draw_cube(&app->cube, &app->anim, app->stickerFade);
   EndMode3D();
