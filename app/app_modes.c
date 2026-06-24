@@ -67,8 +67,6 @@ void handle_solve_space(App *app) {
       t->inspectionActive = 0;
       t->armed = 0;
       t->spaceHeld = 0;
-
-      if (app->mode == MODE_PHYSICAL_SOLVE) init_cube(&app->cube);
     }
   }
 
@@ -104,6 +102,8 @@ void handle_solve_space(App *app) {
       t->inspectionActive = 0;
       t->armed = 0;
       t->spaceHeld = 0;
+
+      if (app->mode == MODE_PHYSICAL_SOLVE) init_cube(&app->cube);
     }
   }
 

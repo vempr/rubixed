@@ -4,8 +4,6 @@
 #include <time.h>
 #include "log.h"
 
-#define SOLVES_FILE "./storage/solves.csv"
-
 void log_solve(const char *scramble, double solve_time, int dnf, const char *mode) {
   printf("logsolve\n");
   FILE *f = fopen(SOLVES_FILE, "a");

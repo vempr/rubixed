@@ -182,6 +182,7 @@ void app_draw(App *app, OrbitCamera *c) {
 
   ClearBackground(COLOR_BG);
   draw_cube_projection(app);
+  draw_statistics_bar(app);
 
   BeginMode3D(c->camera);
   draw_cube(&app->cube, &app->anim, app->stickerFade);
