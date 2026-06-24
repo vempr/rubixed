@@ -32,7 +32,9 @@ all:
 	timer/timer.c \
 	solver/solver.c \
 	storage/log.c \
-	app/utils.c \
+	app/utils/utils.c \
+	app/utils/table.c \
+	app/utils/projection.c \
 	ckociemba/coordcube.c \
 	ckociemba/cubiecube.c \
 	ckociemba/facecube.c \

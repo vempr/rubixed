@@ -5,7 +5,7 @@
 #include "theme.h"
 #include "app_modes.h"
 #include "app_ui.h"
-#include "utils.h"
+#include "./utils/utils.h"
 #include "../app/app.h"
 #include "../cube/cube.h"
 #include "../cube/anim.h"
@@ -56,6 +56,7 @@ void init_app_cube(App *app) {
 	app->intent = (MoveIntent){0};
 	app->timer = (SolveTimer){0};
   app->stickerFade = 0.0f;
+  app->tablePage = 0;
 }
 
 void reset_session(App *app) {
@@ -79,6 +80,7 @@ void reset_session(App *app) {
 	app->intent = (MoveIntent){0};
 	app->timer = (SolveTimer){0};
   app->stickerFade = 0.0f;
+  app->tablePage = 0;
 }
 
 static void solve_abort(App *app) {
@@ -181,8 +183,7 @@ void app_draw(App *app, OrbitCamera *c) {
   BeginDrawing();
 
   ClearBackground(COLOR_BG);
-  draw_cube_projection(app);
-  draw_statistics_bar(app);
+  draw_utils(app);
 
   BeginMode3D(c->camera);
   draw_cube(&app->cube, &app->anim, app->stickerFade);

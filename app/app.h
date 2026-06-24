@@ -37,6 +37,8 @@ typedef struct {
   SolveTimer timer;
 
   float stickerFade;
+
+  int tablePage;
 } App;
 
 typedef struct {
