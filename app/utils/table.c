@@ -56,7 +56,7 @@ int load_solves(SolveEntry *out, AppMode mode) {
 	return count;
 }
 
-static int comp(const void *a, const void *b) {
+int comp(const void *a, const void *b) {
 	float fa = *(const float *)a;
 	float fb = *(const float *)b;
 
@@ -73,7 +73,8 @@ void draw_cell(
 	const char* text,
 	Color bg,
 	Color textColor,
-	float fontSize
+	float fontSize,
+  int highlight
 ) {
 	int borderSize = 2;
 	Color borderColor = BLACK;
@@ -99,7 +100,7 @@ void draw_cell(
 		x + w / 2 - MeasureText(text, fontSize) / 2,
 		y + MeasureTextEx(GetFontDefault(), text, fontSize, 0).y / 2,
 		fontSize,
-		textColor
+		highlight ? GREEN : textColor
 	);
 }
 
@@ -247,4 +248,18 @@ void draw_ui_pagination(int *page, int maxPage) {
     *page = maxPage - 1;
   }
   x += btnW + 5;
+}
+
+float compute_top_threshold(const float *values, int count) {
+  if (count == 0) return __FLT_MAX__;
+
+  int top_n = (int)(count * 0.01);
+  if (top_n < 1) top_n = 1;
+
+  float sorted[MAX_SOLVES];
+  memcpy(sorted, values, count * sizeof(float));
+  qsort(sorted, count, sizeof(float), comp);
+
+  int idx = (top_n - 1 < count - 1) ? top_n - 1 : count - 1;
+  return sorted[idx];
 }

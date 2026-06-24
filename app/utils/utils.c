@@ -52,6 +52,32 @@ static int draw_statistics_bar(App *app) {
 	int endIndex = startIndex - rowsPerPage + 1;
 	if (endIndex < 0) endIndex = 0;
 
+	// best stats
+	float validTimes[numOfSolves];
+	float validAo5[numOfSolves];
+	float validAo12[numOfSolves];
+	int timeCount = 0, ao5Count = 0, ao12Count = 0;
+
+	float ao5vals[numOfSolves];
+	float ao12vals[numOfSolves];
+
+	for (int i = 0; i < numOfSolves; i++) {
+		if (!solves[i].dnf) validTimes[timeCount++] = solves[i].time;
+
+		float a5 = compute_average(solves, i, 5);
+		ao5vals[i] = a5;
+		if (a5 >= 0.0f) validAo5[ao5Count++] = a5;
+
+		float a12 = compute_average(solves, i, 12);
+		ao12vals[i] = a12;
+		if (a12 >= 0.0f) validAo12[ao12Count++] = a12;
+	}
+
+	float timeThreshold = compute_top_threshold(validTimes, timeCount);
+	float ao5Threshold = compute_top_threshold(validAo5, ao5Count);
+	float ao12Threshold = compute_top_threshold(validAo12, ao12Count);
+	
+	// header
 	draw_cell(
 		startX,
 		startY,
@@ -60,7 +86,8 @@ static int draw_statistics_bar(App *app) {
 		"#",
 		COLOR_BG,
 		COLOR_TEXT,
-		fontSize
+		fontSize,
+		0
 	);
 	
 	rowOffset += indexCellWidth;
@@ -73,7 +100,8 @@ static int draw_statistics_bar(App *app) {
 		"TIME",
 		COLOR_BG,
 		COLOR_TEXT,
-		fontSize
+		fontSize,
+		0
 	);
 
 	rowOffset += rectWidth;
@@ -86,7 +114,8 @@ static int draw_statistics_bar(App *app) {
 		"AO5",
 		COLOR_BG,
 		COLOR_TEXT,
-		fontSize
+		fontSize,
+		0
 	);
 
 	rowOffset += rectWidth;
@@ -99,7 +128,8 @@ static int draw_statistics_bar(App *app) {
 		"AO12",
 		COLOR_BG,
 		COLOR_TEXT,
-		fontSize
+		fontSize,
+		0
 	);
 
 	rowOffset += rectWidth;
@@ -122,13 +152,15 @@ static int draw_statistics_bar(App *app) {
 			ti,
 			COLOR_ACCENT,
 			COLOR_TEXT,
-			fontSize
+			fontSize,
+			0
 		);
 
 		rowOffset += indexCellWidth;
 		
 		// time
 		const char* tt = solves[i].dnf ? "DNF" : TextFormat("%.2f", solves[i].time);
+		int highlightTime = !solves[i].dnf && solves[i].time <= timeThreshold;
 
 		draw_cell(
 			x + rowOffset,
@@ -138,7 +170,8 @@ static int draw_statistics_bar(App *app) {
 			tt,
 			COLOR_ACCENT,
 			solves[i].dnf ? RED : COLOR_TEXT,
-			fontSize
+			fontSize,
+			highlightTime
 		);
 
 		rowOffset += rectWidth;
@@ -151,6 +184,8 @@ static int draw_statistics_bar(App *app) {
 		else if (ao5 < -0.5f) strcpy(ao5Buffer, "DNF");
 		else snprintf(ao5Buffer, sizeof(ao5Buffer), "%.2f", ao5);
 
+		int highlightAo5 = ao5vals[i] >= 0.0f && ao5vals[i] <= ao5Threshold;
+
 		draw_cell(
 			x + rowOffset,
 			y,
@@ -159,7 +194,8 @@ static int draw_statistics_bar(App *app) {
 			ao5Buffer,
 			COLOR_ACCENT,
 			ao5 > -1.5f && ao5 < -0.5f ? RED : COLOR_TEXT,
-			fontSize
+			fontSize,
+			highlightAo5
 		);
 
 		rowOffset += rectWidth;
@@ -172,6 +208,8 @@ static int draw_statistics_bar(App *app) {
 		else if (ao12 < -0.5f) strcpy(ao12Buffer, "DNF");
 		else snprintf(ao12Buffer, sizeof(ao12Buffer), "%.2f", ao12);
 
+		int highlightAo12 = ao12vals[i] >= 0.0f && ao12vals[i] <= ao12Threshold;
+
 		draw_cell(
 			x + rowOffset,
 			y,
@@ -180,7 +218,8 @@ static int draw_statistics_bar(App *app) {
 			ao12Buffer,
 			COLOR_ACCENT,
 			ao12 > -1.5f && ao12 < -0.5f ? RED : COLOR_TEXT,
-			fontSize
+			fontSize,
+			highlightAo12
 		);
 	}
 
