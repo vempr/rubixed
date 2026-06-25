@@ -34,6 +34,8 @@ typedef struct {
   SolveEntry *solves;
   int count;
   int current;
+  int copied;
+  int copiedTime;
 } StatsTabCtx;
 
 typedef struct {

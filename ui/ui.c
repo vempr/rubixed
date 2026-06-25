@@ -73,8 +73,8 @@ void ui_tab_dialog(UITabDialog *dialog, int *isInDialogView, int tabCount, UITab
   UIRow tabRow = ui_row(
     panel.x,
     panel.y + 30 * ui_scale(),
-    300,
-    50,
+    250,
+    40,
     10
   );
 
