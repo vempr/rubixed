@@ -15,7 +15,7 @@ else
 endif
 
 all:
-	gcc -std=c99 -O3 -D_POSIX_C_SOURCE=200809L \
+	gcc -std=c99 -O3 -g -D_POSIX_C_SOURCE=200809L \
 	-I./ckociemba/include \
 	main.c \
 	cube/cube.c \

@@ -11,7 +11,8 @@ if(MSVC)
     add_compile_options(/std:c17)
     add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
 else()
-    add_compile_options(-std=c99)
+    # -Werror=implicit-function-declaration will prevent the exact crash you saw
+    add_compile_options(-std=c99 -Werror=implicit-function-declaration)
 endif()
 
 if(MSVC)
@@ -84,7 +85,12 @@ elseif(APPLE)
     "-framework IOKit"
     "-framework CoreVideo"
   )
+  # Make sure POSIX functions are properly visible on macOS as well
+  target_compile_definitions(rubixed PRIVATE _POSIX_C_SOURCE=200809L)
 
 elseif(UNIX AND NOT APPLE)
   target_link_libraries(rubixed PRIVATE m pthread dl rt X11)
+  # This is the fix that stops the segfault:
+  # It tells the compiler to expose the full POSIX-2008 API (including strdup)
+  target_compile_definitions(rubixed PRIVATE _POSIX_C_SOURCE=200809L)
 endif()

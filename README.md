@@ -2,7 +2,7 @@
 
 Rubixed is a cross-platform (Windows, Linux, MacOS) Rubik's Cube visualizer, solver and timer written in C99. Utilizes the Raylib library for smooth 3D rendering and an implementation of the Kociemba Two-Phase Algorithm.
 
-Demo:
+Demo: https://youtube.com/shorts/k43liRs40W4
 
 ## Features & tools
 
