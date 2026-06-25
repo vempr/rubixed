@@ -2,9 +2,21 @@
 #include <errno.h>
 #include <string.h>
 #include <time.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include "log.h"
 
+static void ensure_storage_dir() {
+  #ifndef _WIN32
+    _mkdir("storage");
+  #else
+    mkdir("storage", 0755);
+  #endif
+}
+
 void log_solve(const char *scramble, double solve_time, int plus2, int dnf, const char *mode) {
+  ensure_storage_dir();
+
   printf("logsolve\n");
   FILE *f = fopen(SOLVES_FILE, "a");
   if (!f) {
