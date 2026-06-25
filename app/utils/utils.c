@@ -178,7 +178,8 @@ static int draw_statistics_bar(App *app) {
 		
 		// time
 		const char* tt = solves[i].dnf ? "DNF" : TextFormat("%.2f", solves[i].plus2 ? solves[i].time + 2.0 : solves[i].time);
-		int highlightTime = !solves[i].dnf && solves[i].time <= timeThreshold;
+		int effectiveTime = solves[i].plus2 ? solves[i].time + 2.0 : solves[i].time;
+		int highlightTime = !solves[i].dnf && effectiveTime <= timeThreshold;
 
 		draw_cell(
 			x + rowOffset,

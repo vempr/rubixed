@@ -79,36 +79,36 @@ void draw_solve_steps(App *app) {
   ) return;
 
   switch(get_solve_state(app)) {
-    case STATE_NO_SCRAMBLE: draw_centered_text("ENTER to generate scramble", 15, COLOR_TEXT, 100); break;
-    case STATE_IDLE:        draw_centered_text("Press SPACE to inspect", 20, COLOR_TEXT, 100); break;
+    case STATE_NO_SCRAMBLE: draw_centered_text("ENTER to generate scramble", 15, Fade(COLOR_TEXT, 0.5), 100); break;
+    case STATE_IDLE:        draw_centered_text("Press SPACE to inspect", 20, Fade(COLOR_TEXT, 0.5), 100); break;
     case STATE_INSPECT: {
       double remaining = 15.0 - get_time_elapsed(app->timer.startInspectionTime);
-      draw_centered_text("INSPECTION", 30, BLUE, 100);
-      draw_centered_text(TextFormat("%.1f", remaining), 30, BLUE, 175);
+      draw_centered_text("INSPECTION", 30, Fade(BLUE, 0.5), 100);
+      draw_centered_text(TextFormat("%.1f", remaining), 30, Fade(BLUE, 1.0), 175);
       break;
     }
     case STATE_HOLD: {
       double remaining = 15.0 - get_time_elapsed(app->timer.startInspectionTime);
-      draw_centered_text("Hold SPACE...", 30, RED, 100);
-      draw_centered_text(TextFormat("%.1f", remaining), 30, BLUE, 175);
+      draw_centered_text("Hold SPACE...", 30, Fade(RED, 0.8), 100);
+      draw_centered_text(TextFormat("%.1f", remaining), 30, Fade(BLUE, 1.0), 175);
       break;
     }
     case STATE_ARMED: {
       double remaining = 15.0 - get_time_elapsed(app->timer.startInspectionTime);
-      draw_centered_text("RELEASE to START", 25, GREEN, 100);
-      draw_centered_text(TextFormat("%.1f", remaining), 30, BLUE, 175);
+      draw_centered_text("RELEASE to START", 25, Fade(GREEN, 0.8), 100);
+      draw_centered_text(TextFormat("%.1f", remaining), 30, Fade(BLUE, 1.0), 175);
       break;
     }
     case STATE_RUNNING:     draw_elapsed_time(app); break;
     case STATE_DNF: {
       double remaining = 15.0 - get_time_elapsed(app->timer.startInspectionTime);
       if (remaining < 0) {
-        draw_centered_text("DNF: Exceeded inspection limit", 30, RED, 100);
+        draw_centered_text("DNF: Exceeded inspection limit", 30, Fade(RED, 0.8), 100);
       } else {
-        draw_centered_text("DNF: Solve attempt aborted", 30, RED, 100);
+        draw_centered_text("DNF: Solve attempt aborted", 30, Fade(RED, 0.8), 100);
       }
 
-      draw_centered_text("ENTER to generate scramble", 20, COLOR_TEXT, 150);
+      draw_centered_text("ENTER to generate scramble", 20, Fade(COLOR_TEXT, 0.5), 150);
       break;
     }
   }

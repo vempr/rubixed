@@ -5,12 +5,186 @@
 #include "table.h"
 #include "../theme.h"
 #include "../../ui/ui.h"
+#include "../../storage/log.h"
+
+static void reload_solves(StatsTabCtx *s) {
+  s->count = load_solves(s->solves, s->app->mode);
+  if (s->count <= 0) {
+    s->app->isInDialogView = 0;
+    s->current = 0;
+    return;
+  } else if (s->current >= s->count) {
+    s->current = s->count - 1;
+  }
+}
+
+static void update_solve_in_file(int solveNumber, int togglePlus2, int deleteSolve) {
+  FILE *f = fopen(SOLVES_FILE, "r");
+  if (!f) return;
+
+  int lineCount = 0;
+  char buffer[512];
+
+  while (fgets(buffer, sizeof(buffer), f)) {
+    lineCount++;
+  }
+
+  if (lineCount < 2) {
+    fclose(f);
+    return;
+  }
+
+  // char **lines = malloc(lineCount * sizeof(char *));
+  // if (!lines) {
+  //   fclose(f);
+  //   return;
+  // }
+
+  // while (fgets(lines[lineCount], sizeof(lines[0]), f) && lineCount < 1000) {
+  //   lineCount++;
+  // }
+  // fclose(f);
+
+  // for (int i = 0; i < lineCount; i++) {
+  //   lines[i] = malloc(512);
+  //   if (!lines[i]) {
+  //     for (int j = 0; j < i; j++) {
+  //       free(lines[j]);
+  //     }
+  //     free(lines);
+  //     fclose(f);
+  //     return;
+  //   }
+  //   fgets(lines[i], 512, f);
+  // }
+  // fclose(f);
+
+  int targetLine = solveNumber;
+  if (targetLine < 1 || targetLine >= lineCount) {
+    fclose(f);
+    return;
+  }
+
+  rewind(f);
+
+  FILE *temp = fopen("solves_temp.csv", "w");
+  if (!temp) {
+    fclose(f);
+    return;
+  }
+
+  int currentLine = 0;
+
+  while (fgets(buffer, sizeof(buffer), f)) {
+    if (deleteSolve && currentLine == targetLine) {
+      currentLine++;
+      continue;
+    }
+
+    if (togglePlus2 && currentLine == targetLine) {
+      buffer[strcspn(buffer, "\n")] = 0;
+
+      char *lineCopy = strdup(buffer);
+      char *token;
+      char *fields[6];
+      int fieldCount = 0;
+
+      token = strtok(lineCopy, ",");
+      while (token && fieldCount < 6) {
+        fields[fieldCount++] = token;
+        token = strtok(NULL, ",\n");
+      }
+
+      if (fieldCount >= 4) {
+        int currentPlus2 = atoi(fields[3]);
+        fprintf(
+          temp,
+          "%s,%s,%s,%d,%s,%s\n",
+          fields[0],
+          fields[1],
+          fields[2],
+          currentPlus2 ? 0 : 1,
+          fields[4],
+          fields[5]
+        );
+      } else {
+        fprintf(temp, "%s\n", buffer);
+      }
+
+      free(lineCopy);
+    } else {
+      fputs(buffer, temp);
+    }
+
+    currentLine++;
+  }
+
+  fclose(f);
+  fclose(temp);
+
+  remove(SOLVES_FILE);
+  rename("solves_temp.csv", SOLVES_FILE);
+
+  // if (deleteSolve) {
+  //   free(lines[targetLine]);
+
+  //   for (int i = targetLine; i < lineCount - 1; i++) {
+  //     strcpy(lines[i], lines[i + 1]);
+  //   }
+  //   lineCount--;
+  // } else if (togglePlus2) {
+  //   // timestamp,scramble,time,plus2,dnf,mode
+  //   char *line = strdup(lines[targetLine]);
+  //   char *token;
+  //   char *fields[6];
+  //   int fieldCount = 0;
+
+  //   token = strtok(line, ",");
+  //   while (token && fieldCount < 6) {
+  //     fields[fieldCount++] = token;
+  //     token = strtok(NULL, ",\n");
+  //   }
+
+  //   if (fieldCount >= 4) {
+  //     int currentPlus2 = atoi(fields[3]);
+  //     snprintf(
+  //       lines[targetLine], 512,
+  //       "%s,%s,%s,%d,%d,%s\n",
+  //       fields[0],
+  //       fields[1],
+  //       fields[2],
+  //       currentPlus2 ? 0 : 1,
+  //       fields[4],
+  //       fields[5]
+  //     );
+  //   }
+
+  //   free(line);
+  // }
+
+  // f = fopen(SOLVES_FILE, "w");
+  // if (f) {
+  //   for (int i = 0; i < lineCount; i++) {
+  //     fputs(lines[i], f);
+  //     free(lines[i]);
+  //   }
+  //   fclose(f);
+  // } else {
+  //   for (int j = 0; j < lineCount; j++) {
+  //     free(lines[j]);
+  //   }
+  // }
+
+  // free(lines);
+}
 
 void draw_time_tab(void *ctx, Rectangle area) {
   int fontSize = 20 * ui_scale();
   int yShift = 0;
 
   StatsTabCtx *s = ctx;
+  if (s->count <= 0) return;
+
   SolveEntry *solves = s->solves;
   int i = s->current;
   SolveEntry currentSolve = solves[i];
@@ -97,6 +271,21 @@ void draw_time_tab(void *ctx, Rectangle area) {
     }
 
     SetClipboardText(clipboardText);
+  }
+
+  yShift += 80;
+
+  if (ui_button((Rectangle){area.x, area.y + yShift, 200, 50}, currentSolve.plus2 ? "Remove +2" : "Penalize +2", COLOR_BG, currentSolve.plus2 ? ORANGE : COLOR_TEXT, COLOR_ACCENT, COLOR_ACTIVE, false)) {
+    update_solve_in_file(i + 1, 1, 0);
+    reload_solves(s);
+    s->copied = 0;
+  }
+
+  if (ui_button((Rectangle){area.x + 200, area.y + yShift, 200, 50}, "Delete solve", COLOR_DESTRUCTIVE, COLOR_TEXT, COLOR_ACCENT, COLOR_ACTIVE, false)) {
+    update_solve_in_file(i + 1, 0, 1);
+    reload_solves(s);
+    s->copied = 0;
+    s->app->isInDialogView = 0;
   }
 }
 
@@ -451,7 +640,7 @@ void draw_ao12_tab(void *ctx, Rectangle area) {
       }
 
       strcat(allSolves, solveDetail);
-      if (j < 4) strcat(allSolves, "\n");
+      if (j < 11) strcat(allSolves, "\n");
     }
 
     const char* clipboardText = TextFormat(
