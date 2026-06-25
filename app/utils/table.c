@@ -112,7 +112,7 @@ float compute_average(SolveEntry *solves, int endIndex, int of) {
 	if (endIndex < of - 1) return -2.0f;
 
 	int dnfCount = 0;
-	float lastNTimes[of];
+	float *lastNTimes = (float *)malloc(of * sizeof(float));
 
 	for (int j = 0; j < of; j++) {
 		SolveEntry sol = solves[endIndex - j];
@@ -127,7 +127,10 @@ float compute_average(SolveEntry *solves, int endIndex, int of) {
     }
 	}
 
-	if (dnfCount >= 2) return -1.0f;
+	if (dnfCount >= 2) {
+    free(lastNTimes);
+    return -1.0f;
+  }
 
 	int n = sizeof(lastNTimes) / sizeof(lastNTimes)[0];
 	qsort(lastNTimes, n, sizeof(lastNTimes[0]), comp);
@@ -137,6 +140,7 @@ float compute_average(SolveEntry *solves, int endIndex, int of) {
 		sum += lastNTimes[i];
 	}
 
+  free(lastNTimes);
 	return sum / (float)(of - 2);
 }
 

@@ -19,54 +19,12 @@ static void reload_solves(StatsTabCtx *s) {
   }
 }
 
-static void update_solve_in_file(int solveNumber, int togglePlus2, int deleteSolve) {
+static void update_solve_in_file(SolveEntry *solve, int togglePlus2, int deleteSolve) {
   FILE *f = fopen(SOLVES_FILE, "r");
   if (!f) return;
 
-  int lineCount = 0;
   char buffer[512];
-
-  while (fgets(buffer, sizeof(buffer), f)) {
-    lineCount++;
-  }
-
-  if (lineCount < 2) {
-    fclose(f);
-    return;
-  }
-
-  // char **lines = malloc(lineCount * sizeof(char *));
-  // if (!lines) {
-  //   fclose(f);
-  //   return;
-  // }
-
-  // while (fgets(lines[lineCount], sizeof(lines[0]), f) && lineCount < 1000) {
-  //   lineCount++;
-  // }
-  // fclose(f);
-
-  // for (int i = 0; i < lineCount; i++) {
-  //   lines[i] = malloc(512);
-  //   if (!lines[i]) {
-  //     for (int j = 0; j < i; j++) {
-  //       free(lines[j]);
-  //     }
-  //     free(lines);
-  //     fclose(f);
-  //     return;
-  //   }
-  //   fgets(lines[i], 512, f);
-  // }
-  // fclose(f);
-
-  int targetLine = solveNumber;
-  if (targetLine < 1 || targetLine >= lineCount) {
-    fclose(f);
-    return;
-  }
-
-  rewind(f);
+  int headerWritten = 0;
 
   FILE *temp = fopen("solves_temp.csv", "w");
   if (!temp) {
@@ -74,50 +32,59 @@ static void update_solve_in_file(int solveNumber, int togglePlus2, int deleteSol
     return;
   }
 
-  int currentLine = 0;
-
   while (fgets(buffer, sizeof(buffer), f)) {
-    if (deleteSolve && currentLine == targetLine) {
-      currentLine++;
+    buffer[strcspn(buffer, "\n")] = 0;
+
+    if (!headerWritten) {
+      fprintf(temp, "%s\n", buffer);
+      headerWritten = 1;
       continue;
     }
 
-    if (togglePlus2 && currentLine == targetLine) {
-      buffer[strcspn(buffer, "\n")] = 0;
+    char *lineCopy = strdup(buffer);
+    char *token;
+    char *fields[6];
+    int fieldCount = 0;
 
-      char *lineCopy = strdup(buffer);
-      char *token;
-      char *fields[6];
-      int fieldCount = 0;
-
-      token = strtok(lineCopy, ",");
-      while (token && fieldCount < 6) {
-        fields[fieldCount++] = token;
-        token = strtok(NULL, ",\n");
-      }
-
-      if (fieldCount >= 4) {
-        int currentPlus2 = atoi(fields[3]);
-        fprintf(
-          temp,
-          "%s,%s,%s,%d,%s,%s\n",
-          fields[0],
-          fields[1],
-          fields[2],
-          currentPlus2 ? 0 : 1,
-          fields[4],
-          fields[5]
-        );
-      } else {
-        fprintf(temp, "%s\n", buffer);
-      }
-
-      free(lineCopy);
-    } else {
-      fputs(buffer, temp);
+    token = strtok(lineCopy, ",");
+    while (token && fieldCount < 6) {
+      fields[fieldCount++] = token;
+      token = strtok(NULL, ",\n");
     }
 
-    currentLine++;
+    if (fieldCount < 6) {
+      fprintf(temp, "%s\n", buffer);
+      free(lineCopy);
+      continue;
+    }
+
+    int isTarget = strcmp(fields[0], solve->timestamp) == 0 &&
+      strcmp(fields[1], solve->scramble) == 0;
+
+    if (deleteSolve && isTarget) {
+      free(lineCopy);
+      continue;
+    }
+
+    if (togglePlus2 && isTarget) {
+      int currentPlus2 = atoi(fields[3]);
+      fprintf(
+        temp,
+        "%s,%s,%s,%d,%s,%s\n",
+        fields[0],
+        fields[1],
+        fields[2],
+        currentPlus2 ? 0 : 1,
+        fields[4],
+        fields[5]
+      );
+
+      free(lineCopy);
+      continue;
+    }
+
+    fprintf(temp, "%s\n", buffer);
+    free(lineCopy);
   }
 
   fclose(f);
@@ -125,58 +92,6 @@ static void update_solve_in_file(int solveNumber, int togglePlus2, int deleteSol
 
   remove(SOLVES_FILE);
   rename("solves_temp.csv", SOLVES_FILE);
-
-  // if (deleteSolve) {
-  //   free(lines[targetLine]);
-
-  //   for (int i = targetLine; i < lineCount - 1; i++) {
-  //     strcpy(lines[i], lines[i + 1]);
-  //   }
-  //   lineCount--;
-  // } else if (togglePlus2) {
-  //   // timestamp,scramble,time,plus2,dnf,mode
-  //   char *line = strdup(lines[targetLine]);
-  //   char *token;
-  //   char *fields[6];
-  //   int fieldCount = 0;
-
-  //   token = strtok(line, ",");
-  //   while (token && fieldCount < 6) {
-  //     fields[fieldCount++] = token;
-  //     token = strtok(NULL, ",\n");
-  //   }
-
-  //   if (fieldCount >= 4) {
-  //     int currentPlus2 = atoi(fields[3]);
-  //     snprintf(
-  //       lines[targetLine], 512,
-  //       "%s,%s,%s,%d,%d,%s\n",
-  //       fields[0],
-  //       fields[1],
-  //       fields[2],
-  //       currentPlus2 ? 0 : 1,
-  //       fields[4],
-  //       fields[5]
-  //     );
-  //   }
-
-  //   free(line);
-  // }
-
-  // f = fopen(SOLVES_FILE, "w");
-  // if (f) {
-  //   for (int i = 0; i < lineCount; i++) {
-  //     fputs(lines[i], f);
-  //     free(lines[i]);
-  //   }
-  //   fclose(f);
-  // } else {
-  //   for (int j = 0; j < lineCount; j++) {
-  //     free(lines[j]);
-  //   }
-  // }
-
-  // free(lines);
 }
 
 void draw_time_tab(void *ctx, Rectangle area) {
@@ -277,13 +192,13 @@ void draw_time_tab(void *ctx, Rectangle area) {
   yShift += 80;
 
   if (ui_button((Rectangle){area.x, area.y + yShift, 200, 50}, currentSolve.plus2 ? "Remove +2" : "Penalize +2", COLOR_BG, currentSolve.plus2 ? ORANGE : COLOR_TEXT, COLOR_ACCENT, COLOR_ACTIVE, false)) {
-    update_solve_in_file(i + 1, 1, 0);
+    update_solve_in_file(&currentSolve, 1, 0);
     reload_solves(s);
     s->copied = 0;
   }
 
   if (ui_button((Rectangle){area.x + 200, area.y + yShift, 200, 50}, "Delete solve", COLOR_DESTRUCTIVE, COLOR_TEXT, COLOR_ACCENT, COLOR_ACTIVE, false)) {
-    update_solve_in_file(i + 1, 0, 1);
+    update_solve_in_file(&currentSolve, 0, 1);
     reload_solves(s);
     s->copied = 0;
     s->app->isInDialogView = 0;

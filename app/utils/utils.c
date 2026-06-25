@@ -71,13 +71,13 @@ static int draw_statistics_bar(App *app) {
 	if (endIndex < 0) endIndex = 0;
 
 	// best stats
-	float validTimes[numOfSolves];
-	float validAo5[numOfSolves];
-	float validAo12[numOfSolves];
+	float validTimes[MAX_SOLVES];
+	float validAo5[MAX_SOLVES];
+	float validAo12[MAX_SOLVES];
 	int timeCount = 0, ao5Count = 0, ao12Count = 0;
 
-	float ao5vals[numOfSolves];
-	float ao12vals[numOfSolves];
+	float ao5vals[MAX_SOLVES];
+	float ao12vals[MAX_SOLVES];
 
 	for (int i = 0; i < numOfSolves; i++) {
 		if (!solves[i].dnf) validTimes[timeCount++] = solves[i].time;

@@ -6,8 +6,6 @@
 #include "draw.h"
 
 // debug color (Color){0,0,0,100}
-const Color INTERNAL_COLOR = (Color){0,0,0,100};
-const Color FADE_COLOR = GREEN; // {32, 33, 37, 255};
 const float SIZE = 1.0f, STICKER_SIZE = 0.9f, OFFSET = 0.01f, THICKNESS = 0.01f;
 
 static Color LerpColor(Color a, Color b, float t) {
@@ -25,6 +23,7 @@ static Color LerpColor(Color a, Color b, float t) {
 }
 
 Color GetRaylibColor(int ci, float fade) {
+  const Color FADE_COLOR = GREEN; // {32, 33, 37, 255};
   Color base;
 
   switch(ci) {
@@ -41,6 +40,7 @@ Color GetRaylibColor(int ci, float fade) {
 }
 
 static void draw_piece(Vector3 center, Quaternion orient, int colors[6], float fade) {
+  const Color INTERNAL_COLOR = (Color){0,0,0,100};
   rlPushMatrix();
   rlTranslatef(center.x, center.y, center.z);
 
