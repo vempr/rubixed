@@ -57,6 +57,7 @@ void init_app_cube(App *app) {
 	app->timer = (SolveTimer){0};
   app->stickerFade = 0.0f;
   app->tablePage = 0;
+  app->isInDialogView = 0;
 }
 
 void reset_session(App *app) {
@@ -81,6 +82,7 @@ void reset_session(App *app) {
 	app->timer = (SolveTimer){0};
   app->stickerFade = 0.0f;
   app->tablePage = 0;
+  app->isInDialogView = 0;
 }
 
 static void solve_abort(App *app) {
@@ -104,6 +106,8 @@ static void solve_abort(App *app) {
 }
 
 void handle_app_kb_shortcuts(App *app) {
+  if (app->isInDialogView) return;
+
   // new scramble
   if (IsKeyPressed(KEY_ENTER)) {
     solve_abort(app);
@@ -183,7 +187,6 @@ void app_draw(App *app, OrbitCamera *c) {
   BeginDrawing();
 
   ClearBackground(COLOR_BG);
-  draw_utils(app);
 
   BeginMode3D(c->camera);
   draw_cube(&app->cube, &app->anim, app->stickerFade);
@@ -215,6 +218,7 @@ void app_draw(App *app, OrbitCamera *c) {
 
   draw_solve_steps(app);
   draw_buttons(app, &row);
+  draw_utils(app);
 
   EndDrawing();
 }
@@ -224,6 +228,7 @@ void handle_cube_inputs(App *app) {
 	if (app->anim.active || app->intent.active || app->scrAnim.active) return;
   if (app->mode == MODE_VIRTUAL_SOLVE && !app->currentScramble) return;
   if (app->mode == MODE_VIRTUAL_SOLVE && get_solve_state(app) != STATE_INSPECT && get_solve_state(app) != STATE_RUNNING) return;
+  if (app->isInDialogView) return;
 
 	if (IsKeyDown(KEY_LEFT_SHIFT) || IsKeyDown(KEY_RIGHT_SHIFT)) {
 		Axis axis;

@@ -33,12 +33,11 @@ typedef struct {
 	ScrambleAnim scrAnim;
 	PendingMove pendingMove;
   MoveIntent intent;
-
   SolveTimer timer;
 
   float stickerFade;
-
   int tablePage;
+  int isInDialogView;
 } App;
 
 typedef struct {

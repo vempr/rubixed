@@ -5,13 +5,27 @@
 #include "utils.h"
 #include "projection.h"
 #include "table.h"
+#include "stats.h"
 #include "../theme.h"
 #include "../app.h"
 #include "../../cube/draw.h"
 #include "../../cube/cube.h"
 #include "../../storage/log.h"
+#include "../../ui/ui.h"
 
 // move history
+
+static UITabDialog statsDialog = {
+	.open = 0,
+	.title = "Solve Statistics",
+	.activeTab = -1
+};
+
+static UITab statsTabs[] = {
+	{"Time"},
+	{"Average of 5"},
+	{"Average of 12"},
+};
 
 static void draw_cube_projection(App *app) {
 	int cell = 15 * ui_scale();
@@ -221,6 +235,14 @@ static int draw_statistics_bar(App *app) {
 			fontSize,
 			highlightAo12
 		);
+
+		rowOffset += rectWidth;
+
+		// edit row
+		if (ui_button((Rectangle){x + rowOffset + 2, y + 2, indexCellWidth - 4, cell - 4}, "e.", COLOR_BG, COLOR_TEXT, COLOR_ACCENT, COLOR_ACTIVE, false)) {
+			statsDialog.open = 1;
+			app->isInDialogView = 1;
+		}
 	}
 
 	return maxPage;
@@ -229,6 +251,7 @@ static int draw_statistics_bar(App *app) {
 void draw_utils(App *app) {
 	draw_cube_projection(app);
   int totalPages = draw_statistics_bar(app);
-	handle_arrow_key_pagination(app, totalPages);
+	handle_arrow_key_pagination(app, totalPages, app->isInDialogView);
 	draw_ui_pagination(&app->tablePage, totalPages);
+	ui_tab_dialog(&statsDialog, &app->isInDialogView, 3, statsTabs);
 }

@@ -140,8 +140,8 @@ static int clamp_int(int i, int min, int max) {
   return i;
 }
 
-void handle_arrow_key_pagination(App *app, int totalPages) {
-  if (totalPages == -1) return;
+void handle_arrow_key_pagination(App *app, int totalPages, int navigationDisabled) {
+  if (totalPages == -1 || navigationDisabled) return;
 
   if (IsKeyPressed(KEY_RIGHT)) app->tablePage++;
   if (IsKeyPressed(KEY_LEFT)) app->tablePage--;

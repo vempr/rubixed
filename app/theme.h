@@ -7,6 +7,7 @@ extern const Color COLOR_BG;
 extern const Color COLOR_TEXT;
 extern const Color COLOR_ACCENT;
 extern const Color COLOR_ACTIVE;
+extern const Color COLOR_DESTRUCTIVE;
 
 static float ui_scale() {
   int h = GetScreenHeight();

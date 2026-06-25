@@ -18,7 +18,7 @@ void draw_cell(
 	int highlight
 );
 float compute_average(SolveEntry *solves, int endIndex, int of);
-void handle_arrow_key_pagination(App *app, int totalPages);
+void handle_arrow_key_pagination(App *app, int totalPages, int navigationDisabled);
 void draw_ui_pagination(int *page, int maxPage);
 float compute_top_threshold(const float *values, int count);
 

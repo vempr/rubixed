@@ -40,6 +40,8 @@ void set_mode(App *app, AppMode mode) {
 }
 
 void handle_solve_space(App *app) {
+  if (app->isInDialogView) return;
+
   if (app->mode == MODE_SELF_SOLVE) {
     if (IsKeyPressed(KEY_SPACE) || IsKeyDown(KEY_SPACE)) {
       trigger_self_solve(app);
