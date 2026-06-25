@@ -33,6 +33,9 @@ int load_solves(SolveEntry *out, AppMode mode) {
 		token = strtok(NULL, ",");
 		s.time = strtod(token, NULL);
 
+    token = strtok(NULL, ",");
+		s.plus2 = atoi(token);
+
 		token = strtok(NULL, ",");
 		s.dnf = atoi(token);
 
@@ -116,9 +119,11 @@ float compute_average(SolveEntry *solves, int endIndex, int of) {
 		if (sol.dnf) {
 			dnfCount++;
 			lastNTimes[j] = __FLT_MAX__;
+		} else if (sol.plus2) {
+			lastNTimes[j] = sol.time + 2.0;
 		} else {
-			lastNTimes[j] = sol.time;
-		}
+      lastNTimes[j] = sol.time;
+    }
 	}
 
 	if (dnfCount >= 2) return -1.0f;

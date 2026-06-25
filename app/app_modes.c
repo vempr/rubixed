@@ -32,7 +32,7 @@ static void exit_mode(App *app) {
 }
 
 void set_mode(App *app, AppMode mode) {
-  if (app->mode == mode) return;
+  if (app->mode == mode || app->isInDialogView) return;
 
   exit_mode(app);
   reset_session(app);
@@ -62,7 +62,7 @@ void handle_solve_space(App *app) {
     if (get_time_elapsed(t->startInspectionTime) > 15.0) {
       printf("DNF (inspection time exceeded)\n");
 
-      log_solve(app->currentScramble, 0.0, 1, (app->mode == MODE_PHYSICAL_SOLVE) ? "physical" : "virtual");
+      log_solve(app->currentScramble, 0.0, 0, 1, (app->mode == MODE_PHYSICAL_SOLVE) ? "physical" : "virtual");
 
       t->dnf = 1;
       t->running = 0;
@@ -95,7 +95,7 @@ void handle_solve_space(App *app) {
         app->currentScramble,
         elapsed
       );
-      log_solve(app->currentScramble, elapsed, 0, (app->mode == MODE_PHYSICAL_SOLVE) ? "physical" : "virtual");
+      log_solve(app->currentScramble, elapsed, 0, 0, (app->mode == MODE_PHYSICAL_SOLVE) ? "physical" : "virtual");
 
       free(app->currentScramble);
       app->currentScramble = NULL;

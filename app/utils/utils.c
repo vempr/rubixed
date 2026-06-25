@@ -18,14 +18,15 @@
 static UITabDialog statsDialog = {
 	.open = 0,
 	.title = "Solve Statistics",
-	.activeTab = -1
+	.activeTab = 0
 };
 
-static UITab statsTabs[] = {
-	{"Time"},
-	{"Average of 5"},
-	{"Average of 12"},
+static UITab statsTabs[3] = {
+	{"Time", draw_time_tab},
+	{"Average of 5", draw_ao5_tab},
+	{"Average of 12", draw_ao12_tab},
 };
+static StatsTabCtx statsCtx;
 
 static void draw_cube_projection(App *app) {
 	int cell = 15 * ui_scale();
@@ -56,6 +57,9 @@ static int draw_statistics_bar(App *app) {
 
 	SolveEntry solves[MAX_SOLVES];
 	int numOfSolves = load_solves(solves, app->mode);
+
+	if (!numOfSolves) return 0;
+
 	int row = 0;
 	int rowOffset = 0;
 
@@ -173,7 +177,7 @@ static int draw_statistics_bar(App *app) {
 		rowOffset += indexCellWidth;
 		
 		// time
-		const char* tt = solves[i].dnf ? "DNF" : TextFormat("%.2f", solves[i].time);
+		const char* tt = solves[i].dnf ? "DNF" : TextFormat("%.2f", solves[i].plus2 ? solves[i].time + 2.0 : solves[i].time);
 		int highlightTime = !solves[i].dnf && solves[i].time <= timeThreshold;
 
 		draw_cell(
@@ -183,7 +187,7 @@ static int draw_statistics_bar(App *app) {
 			cell,
 			tt,
 			COLOR_ACCENT,
-			solves[i].dnf ? RED : COLOR_TEXT,
+			solves[i].dnf ? RED : solves[i].plus2 ? ORANGE : COLOR_TEXT,
 			fontSize,
 			highlightTime
 		);
@@ -239,9 +243,14 @@ static int draw_statistics_bar(App *app) {
 		rowOffset += rectWidth;
 
 		// edit row
-		if (ui_button((Rectangle){x + rowOffset + 2, y + 2, indexCellWidth - 4, cell - 4}, "e.", COLOR_BG, COLOR_TEXT, COLOR_ACCENT, COLOR_ACTIVE, false)) {
+		if (ui_button((Rectangle){x + rowOffset + 2, y + 2, indexCellWidth - 4, cell - 4}, "e.", COLOR_BG, COLOR_TEXT, COLOR_ACCENT, COLOR_ACTIVE, false) && !app->isInDialogView) {
 			statsDialog.open = 1;
 			app->isInDialogView = 1;
+			
+			statsCtx.app = app;
+			statsCtx.solves = solves;
+			statsCtx.count = numOfSolves;
+			statsCtx.current = i;
 		}
 	}
 
@@ -253,5 +262,5 @@ void draw_utils(App *app) {
   int totalPages = draw_statistics_bar(app);
 	handle_arrow_key_pagination(app, totalPages, app->isInDialogView);
 	draw_ui_pagination(&app->tablePage, totalPages);
-	ui_tab_dialog(&statsDialog, &app->isInDialogView, 3, statsTabs);
+	ui_tab_dialog(&statsDialog, &app->isInDialogView, 3, statsTabs, &statsCtx);
 }

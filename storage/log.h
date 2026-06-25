@@ -8,10 +8,11 @@ typedef struct {
   char *timestamp;
   char *scramble;
   double time;
+  int plus2;
   int dnf;
   char *mode;
 } SolveEntry;
 
-void log_solve(const char *scramble, double time, int dnf, const char *mode);
+void log_solve(const char *scramble, double time, int plus2, int dnf, const char *mode);
 
 #endif

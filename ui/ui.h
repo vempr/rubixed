@@ -1,4 +1,5 @@
 #include <raylib.h>
+#include "../app/utils/stats.h"
 
 #ifndef UI_H
 #define UI_H
@@ -29,8 +30,15 @@ int ui_button(
 Rectangle ui_next(UIRow *row);
 
 typedef struct {
+  App *app;
+  SolveEntry *solves;
+  int count;
+  int current;
+} StatsTabCtx;
+
+typedef struct {
   const char* label;
-  void (*draw)(Rectangle contentArea);
+  void (*draw)(void *ctx, Rectangle contentArea);
 } UITab;
 
 typedef struct {
@@ -39,6 +47,6 @@ typedef struct {
   int activeTab;
 } UITabDialog;
 
-void ui_tab_dialog(UITabDialog *dialog, int *isInDialogView, int tabCount, UITab *tabs);
+void ui_tab_dialog(UITabDialog *dialog, int *isInDialogView, int tabCount, UITab *tabs, StatsTabCtx *ctx);
 
 #endif

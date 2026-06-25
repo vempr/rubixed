@@ -100,7 +100,7 @@ static void solve_abort(App *app) {
   );
   
   // behaviour: dnf should not be logged if solve hasn't started
-  if (elapsed > 0.0) log_solve(app->currentScramble, elapsed, 1, (app->mode == MODE_PHYSICAL_SOLVE) ? "physical" : "virtual");
+  if (elapsed > 0.0) log_solve(app->currentScramble, elapsed, 0, 1, (app->mode == MODE_PHYSICAL_SOLVE) ? "physical" : "virtual");
 
   app->timer = (SolveTimer){0};
 }
@@ -159,7 +159,7 @@ void handle_app_kb_shortcuts(App *app) {
       printf("DNF: scramble=%s\n", app->currentScramble);
     }
 
-    if (elapsed > 0.0) log_solve(app->currentScramble, elapsed, 1, (app->mode == MODE_PHYSICAL_SOLVE) ? "physical" : "virtual");
+    if (elapsed > 0.0) log_solve(app->currentScramble, elapsed, 0, 1, (app->mode == MODE_PHYSICAL_SOLVE) ? "physical" : "virtual");
    
     t->dnf = 1;
     t->running = 0;

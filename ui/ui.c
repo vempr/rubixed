@@ -1,5 +1,6 @@
 #include "ui.h"
 #include "../app/theme.h"
+#include "../app/utils/stats.h"
 
 int ui_button(Rectangle rect, const char *label, Color base, Color text, Color hover, Color active, bool isActive) {
   Vector2 mouse = GetMousePosition();
@@ -41,7 +42,7 @@ Rectangle ui_next(UIRow *row) {
   return r;
 }
 
-void ui_tab_dialog(UITabDialog *dialog, int *isInDialogView, int tabCount, UITab *tabs) {
+void ui_tab_dialog(UITabDialog *dialog, int *isInDialogView, int tabCount, UITab *tabs, StatsTabCtx *ctx) {
   if (!dialog->open) return;
 
   float width = GetScreenWidth() * 0.9;
@@ -91,6 +92,14 @@ void ui_tab_dialog(UITabDialog *dialog, int *isInDialogView, int tabCount, UITab
     }
   }
 
+  if (
+    dialog->activeTab >= 0 &&
+    dialog->activeTab < tabCount &&
+    tabs[dialog->activeTab].draw
+  ) {
+    tabs[dialog->activeTab].draw(ctx, panel);
+  }
+
   if (ui_button(
     (Rectangle){GetScreenWidth() * 0.95, GetScreenHeight() * 0.05, 40, 40},
     "X",
@@ -101,6 +110,6 @@ void ui_tab_dialog(UITabDialog *dialog, int *isInDialogView, int tabCount, UITab
     false
   )) {
     dialog->open = false;
-    isInDialogView = 0;
+    *isInDialogView = 0;
   }
 }

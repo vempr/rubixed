@@ -34,6 +34,7 @@ all:
 	storage/log.c \
 	app/utils/utils.c \
 	app/utils/table.c \
+	app/utils/stats.c \
 	app/utils/projection.c \
 	ckociemba/coordcube.c \
 	ckociemba/cubiecube.c \

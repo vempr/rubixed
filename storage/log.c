@@ -4,7 +4,7 @@
 #include <time.h>
 #include "log.h"
 
-void log_solve(const char *scramble, double solve_time, int dnf, const char *mode) {
+void log_solve(const char *scramble, double solve_time, int plus2, int dnf, const char *mode) {
   printf("logsolve\n");
   FILE *f = fopen(SOLVES_FILE, "a");
   if (!f) {
@@ -14,7 +14,8 @@ void log_solve(const char *scramble, double solve_time, int dnf, const char *mod
       return;
     }
 
-    fprintf(f, "timestamp,scramble,time,dnf,mode\n");
+    // timestamp,scramble,time,plus2,dnf,mode
+    fprintf(f, "timestamp,scramble,time,plus2,dnf,mode\n");
     fclose(f);
 
     f = fopen(SOLVES_FILE, "a");
@@ -25,7 +26,7 @@ void log_solve(const char *scramble, double solve_time, int dnf, const char *mod
   } else {
     fseek(f, 0, SEEK_END);
     long size = ftell(f);
-    if (size == 0) fprintf(f, "timestamp,scramble,time,dnf,mode\n");
+    if (size == 0) fprintf(f, "timestamp,scramble,time,plus2,dnf,mode\n");
   }
 
   time_t now = time(NULL);
@@ -35,10 +36,11 @@ void log_solve(const char *scramble, double solve_time, int dnf, const char *mod
 
   fprintf(
     f,
-    "%s,%s,%.3f,%d,%s\n",
+    "%s,%s,%.3f,%d,%d,%s\n",
     ts,
     scramble,
     solve_time,
+    plus2 ? 1 : 0,
     dnf ? 1 : 0,
     mode
   );
