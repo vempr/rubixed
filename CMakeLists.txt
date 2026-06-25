@@ -14,6 +14,10 @@ else()
     add_compile_options(-std=c99)
 endif()
 
+if(MSVC)
+  add_compile_options(/wd4244 /wd4305)
+endif()
+
 # ---- FetchContent ----
 include(FetchContent)
 
