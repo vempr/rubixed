@@ -19,8 +19,17 @@
 	#define mkdir_cache() mkdir("cache", 0777)
 #endif
 
-int main(void) {
-	mkdir_cache();
+int main(int argc, char* argv[]) {
+	if (argc > 0 && argv[0] != NULL) {
+		char* dir = strdup(argv[0]);
+		if (dir) {
+			char* dir_path = dirname(dir);
+			int chdir_res = chdir(dir_path);
+			(void)chdir_res;
+			free(dir);
+		}
+	}
+
 	App app = {0};
 	OrbitCamera appCamera;
 

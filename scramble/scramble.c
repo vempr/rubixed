@@ -28,7 +28,7 @@ void scramble_init(const char* cache_dir) {
 static char* random_state(void) {
   cubiecube_t* cc = get_cubiecube();
   cubiecube_t* moveCube = get_moveCube();
-  static char facelets[55];
+  char* facelets = malloc(56);
   facecube_t* fc;
 
   static int seeded = 0;
@@ -56,6 +56,7 @@ char* generate_scramble(int max_moves) {
   }
 
   char* state = random_state();
+  if (!state) return "R U R' U' R U R' U' R U R' U'";
   char* scramble = solution(
     state,
     max_moves,
@@ -63,6 +64,12 @@ char* generate_scramble(int max_moves) {
     0,
     "cache"
   );
+
+  free(state);
+
+  if (!scramble || scramble[0] == '\0' || strcmp(scramble,  "Error") == 0) {
+    return strdup("R U R' U' R U R' U'");
+  }
 
   return scramble;
 }
