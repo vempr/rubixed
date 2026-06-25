@@ -4,23 +4,31 @@ project(rubixed C)
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
-# Suppress the extracted timestamp policy warnings 
-cmake_policy(SET CMP0135 NEW)
+# ---- FIX: CMake policy issue (Raylib compatibility) ----
+cmake_policy(VERSION 3.5...3.30)
+set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
 
-# 1. Fetch and compile Raylib 5.0
+# ---- FetchContent ----
 include(FetchContent)
+
 FetchContent_Declare(
   raylib
   URL https://github.com/raysan5/raylib/archive/refs/tags/5.0.tar.gz
   DOWNLOAD_EXTRACT_TIMESTAMP TRUE
 )
 
-# Crucial Fix: Exclude Raylib internal templates from your target directory scope
-set(CUSTOMIZE_BUILD ON CACHE BOOL "" FORCE)
+# ---- IMPORTANT: Disable Raylib extras ----
 set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(BUILD_GAMES OFF CACHE BOOL "" FORCE)
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+
+# Extra safety for modern raylib builds
+set(RAYLIB_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(RAYLIB_BUILD_GAMES OFF CACHE BOOL "" FORCE)
+
 FetchContent_MakeAvailable(raylib)
 
-# 2. Scope only your project files to avoid picking up internal Raylib templates
+# ---- Executable ----
 add_executable(rubixed)
 
 target_sources(rubixed PRIVATE
@@ -50,17 +58,26 @@ target_sources(rubixed PRIVATE
     ckociemba/prunetable_helpers.c
 )
 
-# 3. Include Header Directories
-target_include_directories(rubixed PRIVATE ./ckociemba/include)
+# ---- Include dirs ----
+target_include_directories(rubixed PRIVATE
+    ./ckociemba/include
+)
 
-# 4. Link Dependencies
+# ---- Link Raylib ----
 target_link_libraries(rubixed PRIVATE raylib)
 
+# ---- Platform libraries ----
 if(WIN32)
-    # Direct system linking for clean MSVC Compilation
     target_link_libraries(rubixed PRIVATE winmm gdi32 opengl32)
+
 elseif(APPLE)
-    target_link_libraries(rubixed PRIVATE "-framework OpenGL" "-framework Cocoa" "-framework IOKit" "-framework CoreVideo")
-elseif(LINUX)
+    target_link_libraries(rubixed PRIVATE
+        "-framework OpenGL"
+        "-framework Cocoa"
+        "-framework IOKit"
+        "-framework CoreVideo"
+    )
+
+elseif(UNIX AND NOT APPLE)
     target_link_libraries(rubixed PRIVATE m pthread dl rt X11)
 endif()
