@@ -8,6 +8,10 @@
 #include "../timer/timer.h"
 #include "../solver/solver.h"
 
+#if defined(_WIN32)
+  #define strtok_r strtok_s
+#endif
+
 // parse_scramble is in anim.c because instructions don't require scramble logic
 // like other functions in scramble.c; only parses scramble for scrAnim to use
 void parse_scramble(const char* scramble, ScrambleAnim* scrAnim) {

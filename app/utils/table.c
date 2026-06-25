@@ -11,6 +11,10 @@
 #include "../../storage/log.h"
 #include "../../ui/ui.h"
 
+#if defined(_WIN32)
+  #define strtok_r strtok_s
+#endif
+
 int load_solves(SolveEntry *out, AppMode mode) {
 	FILE *f = fopen(SOLVES_FILE, "r");
   if (!f) return 0;

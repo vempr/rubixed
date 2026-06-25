@@ -8,6 +8,10 @@
 #include "../../ui/ui.h"
 #include "../../storage/log.h"
 
+#if defined(_WIN32)
+  #define strtok_r strtok_s
+#endif
+
 static void reload_solves(StatsTabCtx *s) {
   s->count = load_solves(s->solves, s->app->mode);
   if (s->count <= 0) {
