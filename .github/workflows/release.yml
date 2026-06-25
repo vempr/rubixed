@@ -72,8 +72,13 @@ jobs:
       - name: Prepare Artifact
         shell: bash
         run: |
-          mv "${{ steps.strings.outputs.build-output-dir }}/${{ matrix.artifact_name }}" \
-             "${{ github.workspace }}/${{ matrix.asset_name }}"
+          # Check if the binary is inside a Release folder (typical for Windows/MSVC multi-config)
+          if [ -f "${{ steps.strings.outputs.build-output-dir }}/Release/${{ matrix.artifact_name }}" ]; then
+            mv "${{ steps.strings.outputs.build-output-dir }}/Release/${{ matrix.artifact_name }}" "${{ github.workspace }}/${{ matrix.asset_name }}"
+          else
+            # Fallback for single-config generators (Linux/macOS)
+            mv "${{ steps.strings.outputs.build-output-dir }}/${{ matrix.artifact_name }}" "${{ github.workspace }}/${{ matrix.asset_name }}"
+          fi
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
