@@ -1,3 +1,4 @@
+#include <float.h>
 #include "raylib.h"
 #include "stdio.h"
 #include "../app.h"
@@ -340,16 +341,16 @@ void draw_ao5_tab(void *ctx, Rectangle area) {
       indices[j] = idx;
 
       if (solves[idx].dnf) {
-        times[j] = __FLT_MAX__;
+        times[j] = FLT_MAX;
       } else {
         times[j] = solves[idx].plus2 ? solves[idx].time + 2.0f : solves[idx].time;
       }
     }
 
-    float bestTime = __FLT_MAX__, worstTime = -__FLT_MAX__;
+    float bestTime = FLT_MAX, worstTime = -FLT_MAX;
 
     for (int j = 0; j < 5; j++) {
-      if (times[j] == __FLT_MAX__) continue;
+      if (times[j] == FLT_MAX) continue;
       if (times[j] < bestTime) {
         bestTime = times[j]; best = j;
       } 
@@ -524,16 +525,16 @@ void draw_ao12_tab(void *ctx, Rectangle area) {
       indices[j] = idx;
 
       if (solves[idx].dnf) {
-        times[j] = __FLT_MAX__;
+        times[j] = FLT_MAX;
       } else {
         times[j] = solves[idx].plus2 ? solves[idx].time + 2.0f : solves[idx].time;
       }
     }
 
-    float bestTime = __FLT_MAX__, worstTime = -__FLT_MAX__;
+    float bestTime = FLT_MAX, worstTime = -FLT_MAX;
 
     for (int j = 0; j < 12; j++) {
-      if (times[j] == __FLT_MAX__) continue;
+      if (times[j] == FLT_MAX) continue;
       if (times[j] < bestTime) {
         bestTime = times[j]; best = j;
       } 

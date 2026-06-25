@@ -5,6 +5,15 @@ project(rubixed C)
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
+# ---- Compiler portability flags ----
+if(MSVC)
+    # MSVC equivalent of C99 behavior
+    add_compile_options(/std:c17)
+    add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
+else()
+    add_compile_options(-std=c99)
+endif()
+
 # ---- FetchContent ----
 include(FetchContent)
 

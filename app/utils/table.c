@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <float.h>
 #include "utils.h"
 #include "table.h"
 #include "../theme.h"
@@ -118,7 +119,7 @@ float compute_average(SolveEntry *solves, int endIndex, int of) {
 
 		if (sol.dnf) {
 			dnfCount++;
-			lastNTimes[j] = __FLT_MAX__;
+			lastNTimes[j] = FLT_MAX;
 		} else if (sol.plus2) {
 			lastNTimes[j] = sol.time + 2.0;
 		} else {
@@ -256,7 +257,7 @@ void draw_ui_pagination(int *page, int maxPage) {
 }
 
 float compute_top_threshold(const float *values, int count) {
-  if (count == 0) return __FLT_MAX__;
+  if (count == 0) return FLT_MAX;
 
   int top_n = (int)(count * 0.01);
   if (top_n < 1) top_n = 1;
