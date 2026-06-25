@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
+#include <libgen.h>
 #include "cube/cube.h"
 #include "cube/anim.h"
 #include "cube/draw.h"
