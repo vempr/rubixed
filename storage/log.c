@@ -2,20 +2,30 @@
 #include <errno.h>
 #include <string.h>
 #include <time.h>
+
 #include <sys/stat.h>
-#include <sys/types.h>
+#ifdef _WIN32
+#include <direct.h>
+#endif
+
 #include "log.h"
 
-static void ensure_storage_dir() {
-  #ifndef _WIN32
-    _mkdir("storage");
-  #else
-    mkdir("storage", 0755);
-  #endif
+static void ensure_storage_dir_exists() {
+  const char *dir = "storage";
+  struct stat st;
+  if (stat(dir, &st) == 0) {
+    if (S_ISDIR(st.st_mode)) return;
+  }
+
+#ifdef _WIN32
+  _mkdir(dir);
+#else
+  mkdir(dir, 0755);
+#endif
 }
 
 void log_solve(const char *scramble, double solve_time, int plus2, int dnf, const char *mode) {
-  ensure_storage_dir();
+  ensure_storage_dir_exists();
 
   printf("logsolve\n");
   FILE *f = fopen(SOLVES_FILE, "a");
