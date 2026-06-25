@@ -363,7 +363,7 @@ void draw_ao5_tab(void *ctx, Rectangle area) {
 
     for (int j = 0; j < 5; j++) {
       if (solves[indices[j]].dnf) {
-        snprintf(temp, sizeof(temp), "DNF", times[j]);
+        snprintf(temp, sizeof(temp), "DNF");
       } else {
         if (j == best || j == worst) {
           snprintf(temp, sizeof(temp), "(%.2f)", times[j]);
@@ -414,7 +414,7 @@ void draw_ao5_tab(void *ctx, Rectangle area) {
 
     for (int j = 0; j < 5; j++) {
       if (solves[indices[j]].dnf) {
-        snprintf(temp, sizeof(temp), "DNF", times[j]);
+        snprintf(temp, sizeof(temp), "DNF");
       } else {
         if (j == best || j == worst) {
           snprintf(temp, sizeof(temp), "(%.2f)", times[j]);
@@ -547,7 +547,7 @@ void draw_ao12_tab(void *ctx, Rectangle area) {
 
     for (int j = 0; j < 12; j++) {
       if (solves[indices[j]].dnf) {
-        snprintf(temp, sizeof(temp), "DNF", times[j]);
+        snprintf(temp, sizeof(temp), "DNF");
       } else {
         if (j == best || j == worst) {
           snprintf(temp, sizeof(temp), "(%.2f)", times[j]);
@@ -598,7 +598,7 @@ void draw_ao12_tab(void *ctx, Rectangle area) {
 
     for (int j = 0; j < 12; j++) {
       if (solves[indices[j]].dnf) {
-        snprintf(temp, sizeof(temp), "DNF", times[j]);
+        snprintf(temp, sizeof(temp), "DNF");
       } else {
         if (j == best || j == worst) {
           snprintf(temp, sizeof(temp), "(%.2f)", times[j]);
