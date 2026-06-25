@@ -5,20 +5,16 @@ project(rubixed C)
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
-# ---- CMake policy safety ----
-cmake_policy(VERSION 3.5...3.30)
-set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
-
 # ---- FetchContent ----
 include(FetchContent)
 
 FetchContent_Declare(
   raylib
-  URL https://github.com/raysan5/raylib/archive/refs/tags/5.0.tar.gz
+  URL https://github.com/raysan5/raylib/archive/refs/tags/5.5.tar.gz
   DOWNLOAD_EXTRACT_TIMESTAMP TRUE
 )
 
-# ---- IMPORTANT: disable ALL raylib extras ----
+# ---- Disable raylib extras safely ----
 set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(BUILD_GAMES OFF CACHE BOOL "" FORCE)
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
@@ -31,9 +27,7 @@ set(RAYLIB_BUILD_EXTRAS OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(raylib)
 
 # ---- Executable ----
-add_executable(rubixed)
-
-target_sources(rubixed PRIVATE
+add_executable(rubixed
 main.c
 cube/cube.c
 cube/draw.c
