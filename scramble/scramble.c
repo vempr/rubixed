@@ -103,7 +103,11 @@ void apply_scramble(RubiksCube* cube, const char* scramble) {
 }
 
 char* invert_scramble(const char* scramble) {
-  if (!scramble) return NULL;
+  if (!scramble || scramble[0] == '\0' || strcmp(scramble,  "Error") == 0) {
+    char* empty = malloc(1);
+    if (empty) empty[0] = '\0';
+    return empty;
+  }
 
   char* copy = strdup(scramble);
   if (!copy) return NULL;
@@ -113,8 +117,25 @@ char* invert_scramble(const char* scramble) {
 
   char* token = strtok(copy, " ");
   while(token && count < 256) {
-    tokens[count++] = token;
+    if (
+      token[0] == 'R' ||
+      token[0] == 'L' ||
+      token[0] == 'F' ||
+      token[0] == 'D' ||
+      token[0] == 'U' ||
+      token[0] == 'B'
+    ) {
+      tokens[count++] = token;
+    }
+    
     token = strtok(NULL, " ");
+  }
+
+  if (count == 0) {
+    free(copy);
+    char* empty = malloc(1);
+    if (empty) empty[0] = '\0';
+    return empty;
   }
 
   char* result = malloc(1024);

@@ -11,7 +11,16 @@
 #include "scramble/scramble.h"
 #include "scramble/scramble_engine.h"
 
+#if defined(_WIN32)
+	#include <direct.h>
+	#define mkdir_cache() _mkdir("cache")
+#else
+	#include <sys/stat.h>
+	#define mkdir_cache() mkdir("cache", 0777)
+#endif
+
 int main(void) {
+	mkdir_cache();
 	App app = {0};
 	OrbitCamera appCamera;
 
