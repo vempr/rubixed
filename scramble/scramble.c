@@ -11,6 +11,10 @@
 #include "scramble.h"
 #include "../cube/cube.h"
 
+#if defined(_WIN32)
+  #define strtok_r strtok_s
+#endif
+
 static int scramble_initialized = 0;
 
 void scramble_init(const char* cache_dir) {
@@ -78,7 +82,8 @@ void apply_scramble(RubiksCube* cube, const char* scramble) {
   char* sc = strdup(scramble);
   if (!sc) return;
 
-  char* token = strtok(sc, " ");
+  char* saveptr;
+  char* token = strtok_r(sc, " ", &saveptr);
   while (token != NULL) {
     if (token[0] != '.' && token[0] != '\0') {
       int face;
@@ -103,7 +108,7 @@ void apply_scramble(RubiksCube* cube, const char* scramble) {
         rotate_face(cube, face, 1);
       }
     }
-    token = strtok(NULL, " ");
+    token = strtok_r(NULL, " ", &saveptr);
   }
 
   free(sc);
@@ -121,8 +126,9 @@ char* invert_scramble(const char* scramble) {
 
   char* tokens[256];
   int count = 0;
+  char* saveptr = NULL;
 
-  char* token = strtok(copy, " ");
+  char* token = strtok_r(copy, " ", &saveptr);
   while(token && count < 256) {
     if (
       token[0] == 'R' ||
@@ -135,7 +141,7 @@ char* invert_scramble(const char* scramble) {
       tokens[count++] = token;
     }
     
-    token = strtok(NULL, " ");
+    token = strtok_r(NULL, " ", &saveptr);
   }
 
   if (count == 0) {

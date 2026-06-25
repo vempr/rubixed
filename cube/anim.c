@@ -17,7 +17,8 @@ void parse_scramble(const char* scramble, ScrambleAnim* scrAnim) {
   
   char* sc = strdup(scramble);
   if (!sc) return;
-  char* token = strtok(sc, " ");
+  char* saveptr;
+  char* token = strtok_r(sc, " ", &saveptr);
 
   while (token != NULL) {
     if (token[1] == '2') {
@@ -36,7 +37,7 @@ void parse_scramble(const char* scramble, ScrambleAnim* scrAnim) {
       scrAnim->moveCount++;
     }
    
-    token = strtok(NULL, " ");
+    token = strtok_r(sc, " ", &saveptr);
   }
 
   free(sc);

@@ -22,7 +22,8 @@ int load_solves(SolveEntry *out, AppMode mode) {
 
 	while (fgets(line, sizeof(line), f)) {
 		char *tmp = strdup(line);
-		char *token = strtok(tmp, ",");
+    char* saveptr;
+    char* token = strtok_r(tmp, " ", &saveptr);
 
 		SolveEntry s = {0};
 
