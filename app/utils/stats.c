@@ -510,7 +510,7 @@ void draw_ao12_tab(void *ctx, Rectangle area) {
 
     char temp[64];
     char headerLine[512] = "";
-    char allSolves[4096] = "";
+    char allSolves[16394] = "";
 
     for (int j = 0; j < 12; j++) {
       if (solves[indices[j]].dnf) {
