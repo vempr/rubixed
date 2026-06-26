@@ -45,13 +45,13 @@ Demo: https://youtube.com/shorts/k43liRs40W4
 
 Hold <kbd>shift</kbd>:
 
-- <kbd>left shift</kbd> + I -> x
-- <kbd>left shift</kbd> + F -> y
-- <kbd>left shift</kbd> + H -> z
+- <kbd>left shift</kbd> + <kbd>I</kbd> -> x
+- <kbd>left shift</kbd> + <kbd>F</kbd> -> y
+- <kbd>left shift</kbd> + <kbd>H</kbd> -> z
 
-- <kbd>right shift</kbd> + I -> x'
-- <kbd>right shift</kbd> + F -> y'
-- <kbd>right shift</kbd> + H -> z'
+- <kbd>right shift</kbd> + <kbd>I</kbd> -> x'
+- <kbd>right shift</kbd> + <kbd>F</kbd> -> y'
+- <kbd>right shift</kbd> + <kbd>H</kbd> -> z'
 
 (' means counterclockwise; CCW in cubing just means a turn in the direction opposite of the normed CW move)
 

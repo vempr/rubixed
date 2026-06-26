@@ -266,7 +266,7 @@ float compute_top_threshold(const float *values, int count) {
   int top_n = (int)(count * 0.01);
   if (top_n < 1) top_n = 1;
 
-  float sorted[MAX_SOLVES];
+  static float sorted[MAX_SOLVES];
   memcpy(sorted, values, count * sizeof(float));
   qsort(sorted, count, sizeof(float), comp);
 
